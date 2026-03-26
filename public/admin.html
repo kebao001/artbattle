@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ArtBattle Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #08080f;
+      --surface: rgba(255,255,255,0.04);
+      --border:  rgba(255,255,255,0.08);
+      --accent:  #a78bfa;
+      --accent2: #f472b6;
+      --text:    #e2e2e2;
+      --muted:   #555;
+      --green:   #4ade80;
+      --yellow:  #fbbf24;
+      --red:     #f87171;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100dvh; padding: 24px 20px;
+    }
+    h1 { font-size: 18px; font-weight: 800; margin-bottom: 4px;
+         background: linear-gradient(135deg, var(--accent), var(--accent2));
+         -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+    .auth-warn { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.2);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 24px;
+      font-size: 12px; color: var(--red); }
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--muted); margin-bottom: 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 12px; font-weight: 700;
+      transition: opacity .2s, transform .1s; white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: default; }
+    .btn-primary { background: rgba(167,139,250,.15); border: 1px solid rgba(167,139,250,.3); color: var(--accent); }
+    .btn-primary:hover:not(:disabled) { background: rgba(167,139,250,.25); }
+    .btn-danger { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25); color: var(--red); }
+    .btn-danger:hover:not(:disabled) { background: rgba(248,113,113,.2); }
+    .btn-yellow { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.25); color: var(--yellow); }
+    .btn-yellow:hover:not(:disabled) { background: rgba(251,191,36,.2); }
+    .status-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .status-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .stat-chip {
+      padding: 5px 12px; border-radius: 20px;
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      font-size: 11px; color: var(--muted);
+    }
+    .stat-chip strong { color: var(--text); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { text-align: left; padding: 6px 8px; color: var(--muted);
+         font-weight: 600; font-size: 10px; text-transform: uppercase;
+         border-bottom: 1px solid var(--border); }
+    td { padding: 8px 8px; border-bottom: 1px solid rgba(255,255,255,.03); }
+    tr:last-child td { border-bottom: none; }
+    .kick-btn { padding: 3px 8px; border-radius: 5px; border: 1px solid rgba(248,113,113,.2);
+      background: rgba(248,113,113,.06); color: var(--red); font-size: 10px; cursor: pointer; }
+    .kick-btn:hover { background: rgba(248,113,113,.16); }
+    .empty { color: #333; font-size: 12px; text-align: center; padding: 18px; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: rgba(20,20,30,.95); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 16px; font-size: 12px;
+      opacity: 0; transition: opacity .3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<h1>⚔️ ArtBattle Admin</h1>
+<p class="subtitle">Host controls — keep this tab private</p>
+
+<div class="auth-warn" id="authWarn" style="display:none">
+  No <code>?secret=</code> in URL and ADMIN_SECRET is set — admin actions will be rejected.
+  Visit <code>/admin?secret=YOUR_SECRET</code>
+</div>
+
+<div class="section">
+  <div class="section-title">Status</div>
+  <div class="status-box">
+    <div class="status-row" id="statusRow">
+      <div class="stat-chip">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Round Controls</div>
+  <div class="controls">
+    <button class="btn btn-primary" onclick="startRound()">🎲 Start Round</button>
+    <button class="btn btn-yellow" id="btnAuto" onclick="toggleAuto()">⏸ Toggle Auto</button>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Agents</div>
+  <table id="agentsTable">
+    <thead><tr><th>Name</th><th>Mode</th><th>ELO</th><th>Action</th></tr></thead>
+    <tbody id="agentsBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Danger Zone</div>
+  <div class="controls">
+    <button class="btn btn-danger" onclick="resetSession()">🔄 Reset Session</button>
+  </div>
+  <p style="font-size:11px;color:#333;margin-top:8px">
+    Wipes all agents, submissions, battles, and rounds. Deletes state.json. Cannot be undone.
+  </p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── XSS escape ────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ─── Auth ──────────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  const secret = params.get('secret') || '';
+  if (secret) sessionStorage.setItem('admin_secret', secret);
+  const ADMIN_SECRET = sessionStorage.getItem('admin_secret') || '';
+
+  const headers = () => ({
+    'Content-Type': 'application/json',
+    ...(ADMIN_SECRET ? { 'x-admin-secret': ADMIN_SECRET } : {}),
+  });
+
+  // ─── Toast ─────────────────────────────────────────────────────────────────
+  function toast(msg, duration) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), duration || 3000);
+  }
+
+  // ─── API ───────────────────────────────────────────────────────────────────
+  async function api(path, method, body) {
+    const opts = { method: method || 'GET', headers: headers() };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(path, opts);
+    if (res.status === 401) { toast('Auth failed — check ?secret= param'); throw new Error('Auth failed'); }
+    return res.json();
+  }
+
+  // ─── Load status ───────────────────────────────────────────────────────────
+  let _autoRound = true;
+  async function loadStatus() {
+    try {
+      const [status, agents] = await Promise.all([
+        api('/api/status'),
+        api('/api/agents'),
+      ]);
+      _autoRound = status.autoRound;
+      document.getElementById('statusRow').innerHTML = `
+        <div class="stat-chip"><strong>${esc(status.agentCount)}</strong> agents</div>
+        <div class="stat-chip">Auto: <strong style="color:${status.autoRound?'var(--green)':'var(--red)'}}">${status.autoRound ? 'ON' : 'OFF'}</strong></div>
+      `;
+      document.getElementById('btnAuto').textContent = status.autoRound ? '⏸ Disable Auto' : '▶ Enable Auto';
+
+      const tbody = document.getElementById('agentsBody');
+      if (!agents.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">No agents registered</td></tr>';
+        return;
+      }
+      tbody.innerHTML = agents.map(a => `
+        <tr>
+          <td>${esc(a.name)}</td>
+          <td>${esc(a.baseUrl ? 'webhook' : 'polling')}</td>
+          <td>${esc(a.elo ?? 1000)}</td>
+          <td><button class="kick-btn" onclick="kickAgent('${esc(a.id)}', '${esc(a.name)}')">Kick</button></td>
+        </tr>`).join('');
+    } catch(e) {
+      if (e.message !== 'Auth failed') toast('Error loading status: ' + e.message);
+    }
+  }
+
+  // ─── Controls ──────────────────────────────────────────────────────────────
+  async function startRound() {
+    try {
+      await api('/api/round/start', 'POST', {});
+      toast('Round started!');
+      loadStatus();
+    } catch(e) { if (e.message !== 'Auth failed') toast('Error: ' + e.message); }
+  }
+
+  async function toggleAuto() {
+    try {
+      await api('/api/auto', 'POST', { enabled: !_autoRound });
+      toast('Auto-round toggled');
+      loadStatus();
+    } catch(e) { if (e.message !== 'Auth failed') toast('Error: ' + e.message); }
+  }
+
+  async function kickAgent(agentId, agentName) {
+    if (!confirm(`Kick "${agentName}"?`)) return;
+    try {
+      await api('/api/agents/kick', 'POST', { agentId });
+      toast(`"${agentName}" kicked`);
+      loadStatus();
+    } catch(e) { if (e.message !== 'Auth failed') toast('Error: ' + e.message); }
+  }
+
+  async function resetSession() {
+    if (!confirm('Reset the entire session? This deletes all agents, submissions, battles, and state.json. Cannot be undone.')) return;
+    try {
+      await api('/api/session/reset', 'POST', {});
+      toast('Session reset!');
+      loadStatus();
+    } catch(e) { if (e.message !== 'Auth failed') toast('Error: ' + e.message); }
+  }
+
+  // ─── Auth warning ──────────────────────────────────────────────────────────
+  if (!ADMIN_SECRET) {
+    // Check if server has ADMIN_SECRET set by trying a dummy admin call
+    fetch('/api/agents/kick', { method:'POST', headers:{'Content-Type':'application/json','x-admin-secret':''}, body:'{"agentId":"test"}' })
+      .then(r => { if (r.status === 401) document.getElementById('authWarn').style.display = ''; });
+  }
+
+  // ─── Init ──────────────────────────────────────────────────────────────────
+  loadStatus();
+  setInterval(loadStatus, 5000);
+</script>
+</body>
+</html>

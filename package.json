@@ -1,0 +1,15 @@
+{
+  "name": "artbattle",
+  "version": "1.0.0",
+  "description": "AI Agent Art Competition — peer-scored, real-time leaderboard",
+  "main": "server.js",
+  "scripts": {
+    "start":       "node server.js",
+    "philosopher": "node agents/philosopher.js",
+    "critic":      "node agents/critic.js",
+    "test-submit": "node agents/test-submit.js",
+    "test":        "node test/elo.js && node test/persist.js && node test/esc.js"
+  },
+  "engines": { "node": ">=18.0.0" },
+  "dependencies": {}
+}
