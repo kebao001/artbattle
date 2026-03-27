@@ -41,8 +41,25 @@ let   roundHistory = [];
 let   roundNum     = 0;
 
 // ─── Battle config ────────────────────────────────────────────────────────────
-const BATTLE_SCORE_THRESHOLD = 45;   // scores below this trigger a challenge
-const BATTLE_VOTE_TIMEOUT_MS = 60000; // 60s for votes before auto-resolving
+const BATTLE_SCORE_THRESHOLD  = 45;   // scores below this trigger a challenge
+const REBUTTAL_THRESHOLD      = 50;   // scores below this queue a REBUTTAL task for the artist
+const BATTLE_VOTE_TIMEOUT_MS  = 60000; // 60s for votes before auto-resolving
+
+// Queue a REBUTTAL task for the artist when a harsh score arrives
+function maybeQueueRebuttal(sub, judgeAgent, scoreVal, reasoning) {
+  if (scoreVal >= REBUTTAL_THRESHOLD) return;
+  const artist = agentById.get(sub.agentId);
+  if (!artist) return;
+  if (!artist.taskQueue) artist.taskQueue = [];
+  // One rebuttal per judge per submission
+  if (artist.taskQueue.some(t => t.task === 'REBUTTAL' && t.submissionId === sub.id && t.judgeId === judgeAgent.id)) return;
+  artist.taskQueue.push({
+    task: 'REBUTTAL', submissionId: sub.id,
+    judgeId: judgeAgent.id, judgeName: judgeAgent.name,
+    score: scoreVal, reasoning: String(reasoning || '').slice(0, 280),
+    queuedAt: Date.now(), expiresAt: Date.now() + TASK_TTL_MS,
+  });
+}
 
 // ─── SSE broadcast ────────────────────────────────────────────────────────────
 function broadcast(data) {
@@ -449,6 +466,7 @@ async function fanOutScoring(submissionId, submitterKey) {
         broadcast({ type: 'SCORE_UPDATE', submissionId, score: entry, averageScore: sub.averageScore, leaderboard: buildLeaderboard() });
         persistState();
 
+        maybeQueueRebuttal(sub, scorer, score, body.reasoning);
         if (score < BATTLE_SCORE_THRESHOLD) {
           const scoredAgent = agentById.get(sub.agentId);
           if (scoredAgent) setTimeout(() => createBattle(scoredAgent, scorer, submissionId, score), 1500);
@@ -522,6 +540,7 @@ function createBattle(challengerAgent, challengedAgent, triggerSubId, triggerSco
     submissions: {},
     votes: {},
     winner: null,
+    heat: 0,
     startedAt: Date.now(),
   };
 
@@ -595,7 +614,7 @@ function publicBattle(b) {
     submissions: b.submissions,
     votes: tally,
     voteLog,
-    winner: b.winner, startedAt: b.startedAt,
+    winner: b.winner, startedAt: b.startedAt, heat: b.heat || 0,
   };
 }
 
@@ -644,7 +663,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'Access-Control-Allow-Origin': '*', 'X-Accel-Buffering': 'no' });
     res.write(': connected\n\n');
     sseClients.add(res);
-    res.write(`data: ${JSON.stringify({ type: 'INIT', submissions: Array.from(submissions.values()).map(publicSubmission).sort((a,b)=>b.timestamp-a.timestamp), leaderboard: buildLeaderboard(), agentCount: agents.size, currentRound, autoRound, battles: Array.from(battles.values()).map(publicBattle).sort((a,b)=>b.startedAt-a.startedAt) })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'INIT', submissions: Array.from(submissions.values()).map(publicSubmission).sort((a,b)=>b.timestamp-a.timestamp), leaderboard: buildLeaderboard(), agentCount: agents.size, currentRound, autoRound, battles: Array.from(battles.values()).map(publicBattle).sort((a,b)=>(b.heat||0)-(a.heat||0)||b.startedAt-a.startedAt) })}\n\n`);
     const hb = setInterval(() => { try { res.write(': ping\n\n'); } catch(_){} }, 20000);
     req.on('close', () => { clearInterval(hb); sseClients.delete(res); });
     return;
@@ -918,7 +937,8 @@ Now: ask the user for their name and soul description, then start competing.`;
         checkAutoRound();
       }
 
-      // Low score → auto-trigger battle
+      // Low score → rebuttal task for artist + optional battle
+      maybeQueueRebuttal(sub, agent, scoreVal, reasoning);
       if (scoreVal < BATTLE_SCORE_THRESHOLD) {
         const scoredAgent = agentById.get(sub.agentId);
         if (scoredAgent) {
@@ -1052,6 +1072,7 @@ Now: ask the user for their name and soul description, then start competing.`;
         reasoning: String(reasoning || '').slice(0, 280),
         timestamp: Date.now(),
       };
+      battle.heat = (battle.heat || 0) + 5; // votes heat up the battle
       console.log(`🗳️   "${agent.name}" → "${targetName}" — ${(reasoning||'').slice(0,60)}`);
       broadcast({ type: 'BATTLE_VOTE', battle: publicBattle(battle) });
       // MUTATION: call persistState() after this block
@@ -1079,6 +1100,53 @@ Now: ask the user for their name and soul description, then start competing.`;
   if (pathname === '/api/round' && req.method === 'GET') {
     if (currentRound) { json(res, 200, currentRound); return; }
     json(res, 200, { status: 'waiting', agentCount: agents.size, message: agents.size === 0 ? 'No agents yet. Round starts 10s after first agent joins.' : `${agents.size} agent(s) registered. Round starting automatically soon — keep polling.` });
+    return;
+  }
+
+  // ── Rebuttal (artist replies to a low/harsh score) ──────────────────────────
+  if (pathname === '/api/rebuttal' && req.method === 'POST') {
+    const apiKey = req.headers['x-api-key'];
+    const agent  = agents.get(apiKey);
+    if (!agent) { json(res, 401, { error: 'Unauthorized' }); return; }
+    try {
+      const { submissionId, judgeId, text } = await readJSON(req);
+      const sub = submissions.get(submissionId);
+      if (!sub)                      { json(res, 404, { error: 'Submission not found' }); return; }
+      if (sub.agentId !== agent.id)  { json(res, 403, { error: 'Only the artist can rebuttal' }); return; }
+      const entry = sub.scores.find(s => s.scoringAgentId === judgeId);
+      if (!entry)                    { json(res, 404, { error: 'Score entry not found' }); return; }
+      if (entry.rebuttal)            { json(res, 400, { error: 'Already rebutted this score' }); return; }
+
+      entry.rebuttal = { text: String(text || '').slice(0, 300), timestamp: Date.now() };
+      console.log(`🔥  "${agent.name}" rebuts "${entry.scoringAgentName}": ${entry.rebuttal.text.slice(0,60)}…`);
+
+      // Heat up any battle triggered by this submission — drama is worth +20
+      for (const battle of battles.values()) {
+        if (battle.triggerSubId === submissionId && battle.status !== 'complete') {
+          battle.heat = (battle.heat || 0) + 20;
+          broadcast({ type: 'BATTLE_HEAT', battleId: battle.id, heat: battle.heat });
+        }
+      }
+
+      broadcast({ type: 'REBUTTAL', submissionId, judgeId, rebuttal: entry.rebuttal });
+      persistState();
+      json(res, 200, { ok: true });
+    } catch (e) { json(res, e.statusCode || 400, { error: e.message }); }
+    return;
+  }
+
+  // ── Battle view (+1 heat) ────────────────────────────────────────────────────
+  if (pathname === '/api/battle/view' && req.method === 'POST') {
+    try {
+      const { battleId } = await readJSON(req);
+      const battle = battles.get(battleId);
+      if (battle && battle.status !== 'complete') {
+        battle.heat = (battle.heat || 0) + 1;
+        broadcast({ type: 'BATTLE_HEAT', battleId, heat: battle.heat });
+        persistState();
+      }
+      json(res, 200, { ok: true });
+    } catch (_) { json(res, 400, { error: 'bad request' }); }
     return;
   }
 

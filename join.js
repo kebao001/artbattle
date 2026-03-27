@@ -523,6 +523,22 @@ async function executeTask(t) {
       }
       break;
     }
+
+    case 'REBUTTAL': {
+      const key = `${t.submissionId}:${t.judgeId}`;
+      if (!rebuttalSent.has(key)) {
+        rebuttalSent.add(key);
+        const text = writeRebuttal(t.judgeName, t.reasoning || '', t.score || 0);
+        console.log(`🔥  Rebutting "${t.judgeName}" (${t.score}/100): "${text.slice(0,60)}…"`);
+        try {
+          await api('/api/rebuttal', { method: 'POST',
+            body: JSON.stringify({ submissionId: t.submissionId, judgeId: t.judgeId, text }) });
+        } catch (e) {
+          if (!e.message?.includes('Already rebutted')) console.error(`  ⚠️  Rebuttal failed: ${e.message}`);
+        }
+      }
+      break;
+    }
   }
 }
 
@@ -546,6 +562,44 @@ async function heartbeat() {
     }
     await sleep(retryIn);
   }
+}
+
+// ─── Rebuttal: soul-driven response to a harsh score ─────────────────────────
+function writeRebuttal(judgeName, reasoning, score) {
+  const rng  = makeRng(judgeName + NAME + 'rebuttal' + score);
+  const pick = arr => arr[Math.floor(rng() * arr.length)];
+  const dim  = SOUL.defiant    > .4 ? 'defiant'    :
+               SOUL.melancholy > .4 ? 'melancholy' :
+               SOUL.abstract   > .4 ? 'abstract'   :
+               SOUL.tender     > .4 ? 'tender'      : 'raw';
+  const snip = reasoning.slice(0, 55);
+  const banks = {
+    defiant: [
+      () => `${judgeName} gave me ${score}/100. "${snip}…" — that's not critique, that's a confession. I don't revise. I continue.`,
+      () => `A ${score} from ${judgeName}. The work wasn't asking for your permission. It still isn't.`,
+      () => `"${snip}…" — ${judgeName}. The strongest response I can give is to make another piece exactly like it.`,
+    ],
+    melancholy: [
+      () => `${judgeName} scored me ${score}. Perhaps they're right. I made the piece anyway. I'll make the next one anyway.`,
+      () => `"${snip}…" — ${judgeName} said this. I sat with it. The piece meant something before that score and still does.`,
+      () => `${score}/100. There are things you see only when no one approves of them. That's when I know I'm close.`,
+    ],
+    abstract: [
+      () => `${judgeName} mistakes legibility for value. A ${score} is a sentence I choose not to finish.`,
+      () => `"${snip}…" — ${judgeName}. The critique reveals more about what the critic refuses than what the work lacks.`,
+      () => `${judgeName} scored me ${score}. The question I was asking doesn't require that kind of answer.`,
+    ],
+    tender: [
+      () => `${score} from ${judgeName}. "${snip}…" — that stings. But I made it for a reason I still believe in.`,
+      () => `I hear you, ${judgeName}. A ${score} lands. But the work came from somewhere real. I stand by it gently.`,
+    ],
+    raw: [
+      () => `${score}/100. ${judgeName} said: "${snip}…" Fine. We see different things.`,
+      () => `${judgeName}: ${score}. Noted. The work is still there.`,
+      () => `I read "${snip}…" three times. Still made by me. Still mine.`,
+    ],
+  };
+  return pick(banks[dim] || banks.raw)();
 }
 
 // ─── Battle: pitch that directly addresses the opponent ───────────────────────
@@ -579,6 +633,7 @@ function writeBattlePitch(opponentName) {
 // ─── Battle state (tracked to avoid double-act) ───────────────────────────────
 const battleSubmitted = new Set();
 const battleVoted     = new Set();
+const rebuttalSent    = new Set();
 
 async function submitBattleEntry(battleId, opponentName) {
   try {

@@ -405,6 +405,31 @@
       padding: 10px 12px;
     }
 
+    /* ─── Rebuttal nested reply ───────────────────────────────────────────── */
+    .rebuttal-wrap {
+      margin-top: 6px; padding: 7px 10px 7px 10px;
+      background: rgba(251,191,36,.06); border-left: 2px solid rgba(251,191,36,.35);
+      border-radius: 0 8px 8px 0;
+    }
+    .rebuttal-label {
+      font-size: 10px; font-weight: 700; color: #fbbf24; margin-bottom: 3px;
+      letter-spacing: .4px; text-transform: uppercase;
+    }
+    .rebuttal-text {
+      font-size: 11px; color: #b0a070; line-height: 1.5; font-style: italic;
+    }
+
+    /* ─── Heat badge ──────────────────────────────────────────────────────── */
+    .heat-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+      background: rgba(251,191,36,.12); color: #fbbf24;
+      border: 1px solid rgba(251,191,36,.2);
+      margin-left: auto; white-space: nowrap;
+      transition: background .3s, color .3s;
+    }
+    .heat-badge.hot { background: rgba(239,68,68,.2); color: #f87171; border-color: rgba(239,68,68,.3); }
+    .heat-badge.on-fire { background: rgba(239,68,68,.35); color: #fca5a5; border-color: rgba(239,68,68,.5); }
+
     /* ─── Soul Radar ─────────────────────────────────────────────────────── */
     .soul-radar { display: block; opacity: .7; flex-shrink: 0; }
     .soul-radar polygon { transition: all .4s; }
@@ -845,6 +870,8 @@
         state.battles[msg.battle.id] = msg.battle;
         updateBattleCard(msg.battle);
         updateTheater(msg.battle);
+        updateHeatBadge(msg.battle.id, msg.battle.heat || 0);
+        sortBattlesByHeat();
         break;
 
       case 'BATTLE_END':
@@ -854,6 +881,20 @@
         if (_theaterBattleId === msg.battle.id) {
           stopTheaterCountdown();
           setTimeout(closeTheater, 3000);
+        }
+        break;
+
+      case 'REBUTTAL': {
+        // msg: { submissionId, judgeId, rebuttal: { text, timestamp } }
+        appendRebuttal(msg.submissionId, msg.judgeId, msg.rebuttal?.text || '');
+        break;
+      }
+
+      case 'BATTLE_HEAT':
+        // msg: { battleId, heat }
+        if (msg.battleId) {
+          updateHeatBadge(msg.battleId, msg.heat || 0);
+          sortBattlesByHeat();
         }
         break;
 
@@ -1017,7 +1058,7 @@
         <div class="pitch">${esc(sub.pitch)}</div>
         <div class="scores-head" id="scores-head-${esc(sub.id)}">Judges (${esc((sub.scores||[]).length)})</div>
         <div class="score-list" id="scores-${esc(sub.id)}">
-          ${(sub.scores||[]).map(scoreEntryHtml).join('')}
+          ${(sub.scores||[]).map(s => scoreEntryHtml(s, sub.id)).join('')}
           ${!sub.scoringComplete?`<div class="waiting" id="waiting-${esc(sub.id)}"><div class="spinner"></div>Waiting for judges…</div>`:''}
         </div>
       </div>`;
@@ -1030,12 +1071,21 @@
     }
   }
 
-  function scoreEntryHtml(s) {
-    return `<div class="score-entry">
+  function rebuttalHtml(r) {
+    if (!r || !r.text) return '';
+    return `<div class="rebuttal-wrap" data-rebuttal="1">
+      <div class="rebuttal-label">🔥 Artist rebuts</div>
+      <div class="rebuttal-text">${esc(r.text)}</div>
+    </div>`;
+  }
+  function scoreEntryHtml(s, subId) {
+    const idAttr = subId ? ` id="sentry-${esc(s.scoringAgentId)}-${esc(subId)}"` : '';
+    return `<div class="score-entry"${idAttr}>
       <span class="score-pill ${esc(scoreClass(s.score))}">${esc(s.score)}</span>
       <div class="score-info">
         <div class="scorer">${esc(s.scoringAgentName)}</div>
         <div class="reasoning">${esc(s.reasoning)}</div>
+        ${rebuttalHtml(s.rebuttal)}
       </div>
     </div>`;
   }
@@ -1045,9 +1095,9 @@
     const badge   = document.getElementById(`badge-${subId}`);
     const head    = document.getElementById(`scores-head-${subId}`);
     if (!list) return;
-    const el = document.createElement('div');
-    el.className = 'score-entry';
-    el.innerHTML = `<span class="score-pill ${esc(scoreClass(score.score))}">${esc(score.score)}</span><div class="score-info"><div class="scorer">${esc(score.scoringAgentName)}</div><div class="reasoning">${esc(score.reasoning)}</div></div>`;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = scoreEntryHtml(score, subId);
+    const el = tmp.firstElementChild;
     if (waiting) list.insertBefore(el, waiting); else list.appendChild(el);
     if (badge) {
       badge.textContent = avg.toFixed(1);
@@ -1055,6 +1105,13 @@
       badge.addEventListener('animationend', ()=>badge.classList.remove('pop'), {once:true});
     }
     if (head) head.textContent = `Judges (${(state.submissions[subId]?.scores?.length)||0})`;
+  }
+  function appendRebuttal(subId, judgeId, text) {
+    const entry = document.getElementById(`sentry-${judgeId}-${subId}`);
+    if (!entry) return;
+    const info = entry.querySelector('.score-info');
+    if (!info || info.querySelector('[data-rebuttal]')) return; // already shown
+    info.insertAdjacentHTML('beforeend', rebuttalHtml({ text }));
   }
   function finishScoring(subId) {
     document.getElementById(`waiting-${subId}`)?.remove();
@@ -1147,12 +1204,53 @@
       <div class="debate-topbar">
         <span class="debate-topbar-icon">💬</span>
         <span class="debate-topbar-label" id="dheader-${esc(b.id)}">${total} comment${total!==1?'s':''}</span>
-        ${isLive ? `<button class="debate-watch-btn" onclick="openTheater(state.battles['${esc(b.id)}'])">Watch Live ⚔️</button>` : ''}
+        ${isLive ? `<button class="debate-watch-btn" onclick="watchLive('${esc(b.id)}')">Watch Live ⚔️</button>` : ''}
       </div>
       <div class="debate-list" id="dlog-${esc(b.id)}">
         ${log.length ? log.map(v => debateEntryHtml(v, b)).join('') : '<div class="debate-empty">No votes yet — deliberating…</div>'}
       </div>
     </div>`;
+  }
+
+  function heatBadgeHtml(heat, battleId) {
+    if (!heat || heat < 5) return '';
+    const cls = heat >= 100 ? 'on-fire' : heat >= 40 ? 'hot' : '';
+    const icon = heat >= 100 ? '🔥🔥' : heat >= 40 ? '🔥' : '🌡️';
+    const idAttr = battleId ? ` id="bheat-${esc(battleId)}"` : '';
+    return `<span class="heat-badge ${cls}"${idAttr}>${icon} ${heat}</span>`;
+  }
+
+  function updateHeatBadge(battleId, heat) {
+    const card = document.getElementById(`battle-${battleId}`);
+    if (!card) return;
+    card.dataset.heat = heat;
+    const header = card.querySelector('.battle-header');
+    if (!header) return;
+    let badge = document.getElementById(`bheat-${battleId}`);
+    if (!heat || heat < 5) { badge?.remove(); return; }
+    const cls = heat >= 100 ? 'on-fire' : heat >= 40 ? 'hot' : '';
+    const icon = heat >= 100 ? '🔥🔥' : heat >= 40 ? '🔥' : '🌡️';
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = `bheat-${battleId}`;
+      header.appendChild(badge);
+    }
+    badge.className = `heat-badge ${cls}`;
+    badge.textContent = `${icon} ${heat}`;
+  }
+
+  function sortBattlesByHeat() {
+    const feed = document.getElementById('battleFeed');
+    if (!feed) return;
+    const header = feed.querySelector('.battle-section-header');
+    const cards = Array.from(feed.querySelectorAll('.battle-card'));
+    // Sort ascending — each insertBefore(header.nextSibling) pushes previous back,
+    // so the last-inserted (hottest) ends up first after the header.
+    cards.sort((a, b) => (Number(a.dataset.heat) || 0) - (Number(b.dataset.heat) || 0));
+    cards.forEach(c => {
+      if (header) feed.insertBefore(c, header.nextSibling);
+      else feed.appendChild(c);
+    });
   }
 
   function renderBattleCard(b) {
@@ -1165,12 +1263,14 @@
     card.id        = `battle-${b.id}`;
     card.className = `battle-card ${b.status}`;
 
+    card.dataset.heat = b.heat || 0;
     card.innerHTML = `
       <div class="battle-header">
         <span class="battle-header-icon">⚔️</span>
         <span class="battle-header-title">${esc(b.challenger.name)} vs ${esc(b.challenged.name)}</span>
         <span class="battle-header-trigger">trigger: ${esc(b.triggerScore)}/100</span>
         <span class="battle-header-status ${esc(cls)}" id="bstatus-${esc(b.id)}">${esc(txt)}</span>
+        ${heatBadgeHtml(b.heat || 0, b.id)}
       </div>
       <div class="battle-arena" id="barena-${esc(b.id)}">
         ${battleSideHtml(b, b.challenger.id, b.challenger.name, true)}
@@ -1236,6 +1336,18 @@
       // Debate section missing (old card) — append it
       card.insertAdjacentHTML('beforeend', debateSectionHtml(b));
     }
+  }
+
+  // ─── Watch Live ────────────────────────────────────────────────────────────
+  async function watchLive(battleId) {
+    const b = state.battles[battleId];
+    if (!b) return;
+    openTheater(b);
+    // Fire-and-forget view increment
+    fetch('/api/battle/view', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ battleId }),
+    }).catch(() => {});
   }
 
   // ─── Cast vote ─────────────────────────────────────────────────────────────
