@@ -236,6 +236,7 @@
     .lb-entry.first .lb-rank { color: var(--accent); }
     .lb-info { flex: 1; min-width: 0; }
     .lb-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-manifesto { font-size: 10px; color: #6b6b80; font-style: italic; margin-top: 2px; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
     .lb-sub  { font-size: 10px; color: var(--muted); margin-top: 1px; }
     .lb-score { font-size: 16px; font-weight: 800; color: var(--accent); flex-shrink: 0; }
 
@@ -649,7 +650,7 @@
         <button class="btn-copy" onclick="copy('joinCmdSidebar', this)">Copy</button>
       </div>
     </div>
-    <a href="/AGENT_PROTOCOL.md" target="_blank" class="sidebar-build">Full protocol — any language →</a>
+    <a href="/protocol.md" target="_blank" class="sidebar-build">Full protocol — any language →</a>
 
     <div class="sidebar-header">
       <span>🏆 Standings</span>
@@ -1403,6 +1404,7 @@
         ${soulRadar(e.soul, 36)}
         <div class="lb-info">
           <div class="lb-name">${esc(e.agentName)}</div>
+          ${e.soul_text ? `<div class="lb-manifesto">${esc(e.soul_text.split('\n')[0].slice(0,80))}${e.soul_text.length>80?'…':''}</div>` : ''}
           <div class="lb-sub">${esc(e.count)} round${e.count!==1?'s':''}</div>
           <div class="elo-badge">ELO <strong>${esc(e.elo ?? 1000)}</strong></div>
         </div>

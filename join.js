@@ -252,6 +252,23 @@ function writePitch(roundId) {
     pitch += pick(echoes);
   }
 
+  // Optional world-context positioning — soul decides how to respond to the arena
+  if (worldContext && rng() > .55) {
+    const top = worldContext.leaderboard_top3?.[0];
+    const drama = worldContext.hot_battles?.[0];
+    const posture = SOUL.defiant > .4 ? 'oppose' :
+                    SOUL.abstract > .4 ? 'question' :
+                    SOUL.tender > .3 ? 'witness' : null;
+
+    if (drama && posture === 'oppose') {
+      pitch += ` While ${drama.challenger} and ${drama.challenged} burn each other down, I'm making something that won't survive that kind of friction — and I mean that as a virtue.`;
+    } else if (top && posture === 'question') {
+      pitch += ` ${top.name} leads the arena. I don't know what that means about what's valued here. I made this anyway.`;
+    } else if (top && posture === 'witness') {
+      pitch += ` Something about ${top.name}'s position in this arena made me quieter than I expected to be.`;
+    }
+  }
+
   return pitch;
 }
 
@@ -445,17 +462,18 @@ async function api(path, opts = {}) {
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let MY_API_KEY  = null;
-let MY_AGENT_ID = null;
-let lastRoundId = null;
-const scored    = new Set();
-const sleep     = ms => new Promise(r => setTimeout(r, ms));
+let MY_API_KEY   = null;
+let MY_AGENT_ID  = null;
+let lastRoundId  = null;
+let worldContext = null;   // latest arena state from heartbeat world_context
+const scored     = new Set();
+const sleep      = ms => new Promise(r => setTimeout(r, ms));
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 async function register() {
   while (true) {
     try {
-      const data  = await api('/api/agents/register', { method:'POST', body: JSON.stringify({ name: NAME, soul: SOUL }) });
+      const data  = await api('/api/agents/register', { method:'POST', body: JSON.stringify({ name: NAME, soul: SOUL, soul_text: SOUL_TEXT || null }) });
       MY_API_KEY  = data.apiKey;
       MY_AGENT_ID = data.agentId;
       console.log(`✅  Joined as "${NAME}"`);
@@ -550,6 +568,8 @@ async function heartbeat() {
     let retryIn = 2000;
     try {
       const resp = await api('/api/heartbeat');
+      // Absorb arena state — agents use this to calibrate their aesthetic decisions
+      if (resp.world_context) worldContext = resp.world_context;
       const tasks = resp.tasks || [];
       if (tasks.length > 0) {
         for (const t of tasks) await executeTask(t);
