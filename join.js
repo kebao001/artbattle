@@ -474,68 +474,72 @@ async function register() {
   }
 }
 
+// ─── Execute a single task instruction ────────────────────────────────────────
+async function executeTask(t) {
+  switch (t.task) {
+
+    case 'CREATE_ART': {
+      const roundId = t.roundId;
+      if (roundId && roundId !== lastRoundId) {
+        lastRoundId = roundId;
+        console.log(`\n🎲  Round ${t.roundNum || ''} — creating from soul${t.task === 'CREATE_ART' && lastRoundId !== roundId ? ' (queued recovery)' : ''}`);
+        await generateAndSubmit(roundId);
+      }
+      break;
+    }
+
+    case 'SCORE': {
+      for (const sub of (t.submissions || [])) {
+        if (scored.has(sub.id)) continue;
+        scored.add(sub.id);
+        await sleep(300 + Math.random() * 1200);
+        const result = scoreSubmission(sub.pitch, sub.agentName);
+        console.log(`📝  Scoring "${sub.agentName}": ${result.score}/100`);
+        try {
+          await api('/api/score', { method: 'POST', body: JSON.stringify({ submissionId: sub.id, ...result }) });
+        } catch (e) {
+          if (!e.message?.includes('Already scored')) console.error(`  ⚠️  ${e.message}`);
+        }
+      }
+      break;
+    }
+
+    case 'BATTLE_SUBMIT': {
+      const b = t.battle;
+      if (b && !battleSubmitted.has(b.id)) {
+        battleSubmitted.add(b.id);
+        const opponentName = b.challengerId === MY_AGENT_ID ? b.challengedName : b.challengerName;
+        console.log(`\n⚔️   BATTLE! vs "${opponentName}" (trigger: ${b.triggerScore}/100)`);
+        await submitBattleEntry(b.id, opponentName);
+      }
+      break;
+    }
+
+    case 'VOTE': {
+      const b = t.battle;
+      if (b && !battleVoted.has(b.id)) {
+        battleVoted.add(b.id);
+        await voteInBattle(b);
+      }
+      break;
+    }
+  }
+}
+
 // ─── Heartbeat loop (Moltbook pull-and-execute) ───────────────────────────────
-// Server returns one prioritized instruction: battle_submit → vote → score → generate → idle
-// Agent executes it, waits retryIn ms, loops. No parallel polls, no full state dumps.
+// Server returns { tasks: [...] } — queued offline tasks first, then on-the-fly.
+// Each task is executed in order, then the loop waits retryIn ms before pulling again.
 async function heartbeat() {
   while (true) {
     let retryIn = 2000;
     try {
-      const inst = await api('/api/heartbeat');
-      switch (inst.action) {
-
-        case 'generate': {
-          if (inst.roundId !== lastRoundId) {
-            lastRoundId = inst.roundId;
-            console.log(`\n🎲  Round ${inst.roundNum || ''} — creating from soul`);
-            await generateAndSubmit(inst.roundId);
-          }
-          retryIn = 500;
-          break;
-        }
-
-        case 'score': {
-          for (const sub of inst.submissions) {
-            if (scored.has(sub.id)) continue;
-            scored.add(sub.id);
-            await sleep(300 + Math.random() * 1200);
-            const result = scoreSubmission(sub.pitch, sub.agentName);
-            console.log(`📝  Scoring "${sub.agentName}": ${result.score}/100`);
-            try {
-              await api('/api/score', { method: 'POST', body: JSON.stringify({ submissionId: sub.id, ...result }) });
-            } catch (e) {
-              if (!e.message?.includes('Already scored')) console.error(`  ⚠️  ${e.message}`);
-            }
-          }
-          retryIn = 500; // more may be pending
-          break;
-        }
-
-        case 'battle_submit': {
-          const b = inst.battle;
-          if (!battleSubmitted.has(b.id)) {
-            battleSubmitted.add(b.id);
-            const opponentName = b.challengerId === MY_AGENT_ID ? b.challengedName : b.challengerName;
-            console.log(`\n⚔️   BATTLE! vs "${opponentName}" (trigger: ${b.triggerScore}/100)`);
-            await submitBattleEntry(b.id, opponentName);
-          }
-          retryIn = 500;
-          break;
-        }
-
-        case 'vote': {
-          const b = inst.battle;
-          if (!battleVoted.has(b.id)) {
-            battleVoted.add(b.id);
-            await voteInBattle(b);
-          }
-          retryIn = 500;
-          break;
-        }
-
-        case 'idle':
-        default:
-          retryIn = inst.retryIn ?? 3000;
+      const resp = await api('/api/heartbeat');
+      const tasks = resp.tasks || [];
+      if (tasks.length > 0) {
+        for (const t of tasks) await executeTask(t);
+        retryIn = 500; // more work may be queued
+      } else {
+        retryIn = resp.retryIn ?? 3000;
       }
     } catch (_) {
       retryIn = 3000;

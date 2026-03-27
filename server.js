@@ -19,6 +19,8 @@ const crypto = require('crypto');
 const PORT         = process.env.PORT || 3000;
 const PUBLIC_URL   = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
+const FANOUT_LIMIT = Number(process.env.FANOUT_LIMIT) || 10; // max concurrent webhook calls
+const TASK_TTL_MS  = 5 * 60 * 1000;                          // queued tasks expire after 5 min
 const UPLOAD_DIR   = path.join(__dirname, 'uploads');
 const PUBLIC_DIR   = path.join(__dirname, 'public');
 const DATA_DIR     = path.join(__dirname, 'data');
@@ -402,75 +404,79 @@ function checkAutoRound() {
   }
 }
 
-// ─── Score fan-out ────────────────────────────────────────────────────────────
+// ─── Score fan-out (batched, queue on failure) ────────────────────────────────
+async function sendScoreWebhook(scorer, submissionId, sub) {
+  const res = await fetch(`${scorer.baseUrl}/score`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      submissionId,
+      imageUrl:          `${PUBLIC_URL}${sub.imageUrl}`,
+      pitch:             sub.pitch,
+      submittingAgent:   sub.agentName,
+      submittingAgentId: sub.agentId,
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 async function fanOutScoring(submissionId, submitterKey) {
   const sub     = submissions.get(submissionId);
   if (!sub) return;
-  // Only fan-out to webhook agents; polling agents score on their own schedule
+  // Only fan-out to webhook agents; polling/heartbeat agents score via /api/heartbeat
   const scorers = Array.from(agents.entries()).filter(([k, a]) => k !== submitterKey && a.mode === 'webhook');
 
-  // Remove webhook agents from pendingScorers — they'll be handled via fan-out
-  // Polling agents remain in pendingScorers until they POST to /api/score
-  for (const [, scorer] of scorers) {
-    sub.pendingScorers.delete(scorer.id);
-  }
-
-  // If no webhook scorers, scoringComplete is driven by polling agents + timer only
+  // Remove webhook agents from pendingScorers — handled via fan-out or queued task
+  for (const [, scorer] of scorers) sub.pendingScorers.delete(scorer.id);
   if (!scorers.length) return;
 
-  await Promise.allSettled(scorers.map(async ([, scorer]) => {
-    try {
-      const res = await fetch(`${scorer.baseUrl}/score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          submissionId,
-          imageUrl:          `${PUBLIC_URL}${sub.imageUrl}`,
-          pitch:             sub.pitch,
-          submittingAgent:   sub.agentName,
-          submittingAgentId: sub.agentId,
-        }),
-        signal: AbortSignal.timeout(20000),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json();
+  // Batched fan-out — at most FANOUT_LIMIT concurrent webhook calls
+  for (let i = 0; i < scorers.length; i += FANOUT_LIMIT) {
+    if (i > 0) console.log(`  ↻ Fan-out batch ${Math.floor(i/FANOUT_LIMIT)+1} of ${Math.ceil(scorers.length/FANOUT_LIMIT)}`);
+    await Promise.allSettled(scorers.slice(i, i + FANOUT_LIMIT).map(async ([, scorer]) => {
+      try {
+        const body      = await sendScoreWebhook(scorer, submissionId, sub);
+        const score     = Math.min(100, Math.max(0, Math.round(Number(body.score))));
+        const reasoning = String(body.reasoning || 'No reasoning provided');
+        const entry = { scoringAgentId: scorer.id, scoringAgentName: scorer.name, score, reasoning, timestamp: Date.now() };
 
-      const score     = Math.min(100, Math.max(0, Math.round(Number(body.score))));
-      const reasoning = String(body.reasoning || 'No reasoning provided');
-      const entry = { scoringAgentId: scorer.id, scoringAgentName: scorer.name, score, reasoning, timestamp: Date.now() };
+        sub.scores.push(entry);
+        sub.averageScore = Math.round(sub.scores.reduce((s, e) => s + e.score, 0) / sub.scores.length * 10) / 10;
 
-      sub.scores.push(entry);
-      sub.averageScore = Math.round(sub.scores.reduce((s, e) => s + e.score, 0) / sub.scores.length * 10) / 10;
+        console.log(`⭐  ${scorer.name} → "${sub.agentName}": ${score}/100`);
+        broadcast({ type: 'SCORE_UPDATE', submissionId, score: entry, averageScore: sub.averageScore, leaderboard: buildLeaderboard() });
+        persistState();
 
-      console.log(`⭐  ${scorer.name} → "${sub.agentName}": ${score}/100`);
-      broadcast({ type: 'SCORE_UPDATE', submissionId, score: entry, averageScore: sub.averageScore, leaderboard: buildLeaderboard() });
-      // MUTATION: call persistState() after this block
-      persistState();
-
-      // Trigger battle if low score
-      if (score < BATTLE_SCORE_THRESHOLD) {
-        const scoredAgent = agentById.get(sub.agentId);
-        if (scoredAgent) {
-          setTimeout(() => createBattle(scoredAgent, scorer, submissionId, score), 1500);
+        if (score < BATTLE_SCORE_THRESHOLD) {
+          const scoredAgent = agentById.get(sub.agentId);
+          if (scoredAgent) setTimeout(() => createBattle(scoredAgent, scorer, submissionId, score), 1500);
         }
+      } catch (err) {
+        // Agent unreachable — queue the task so it picks it up on next heartbeat
+        console.error(`❌  ${scorer.name} scoring failed (queued): ${err.message}`);
+        scorer.taskQueue.push({
+          task: 'SCORE', submissionId,
+          imageUrl: `${PUBLIC_URL}${sub.imageUrl}`,
+          pitch: sub.pitch, submittingAgent: sub.agentName, submittingAgentId: sub.agentId,
+          queuedAt: Date.now(), expiresAt: Date.now() + TASK_TTL_MS,
+        });
       }
-    } catch (err) {
-      console.error(`❌  ${scorer.name} scoring failed: ${err.message}`);
-    }
-  }));
+    }));
+  }
 
-  // Webhook scoring done — mark complete if no polling agents remain
+  // Webhook pass done — mark complete if no polling agents remain
   if (sub.pendingScorers.size === 0 && !sub.scoringComplete) {
     sub.scoringComplete = true;
     if (sub.scoringTimer) { clearTimeout(sub.scoringTimer); sub.scoringTimer = null; }
     broadcast({ type: 'SCORING_COMPLETE', submissionId });
-    // MUTATION: call persistState() after this block
     persistState();
     checkAutoRound();
   }
 }
 
-// ─── Generation fan-out ───────────────────────────────────────────────────────
+// ─── Generation fan-out (queue on failure) ────────────────────────────────────
 async function triggerGeneration(roundId) {
   const allAgents     = Array.from(agents.values());
   const webhookAgents = allAgents.filter(a => a.mode === 'webhook');
@@ -479,11 +485,16 @@ async function triggerGeneration(roundId) {
   for (const agent of webhookAgents) {
     fetch(`${agent.baseUrl}/generate`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roundId, serverUrl: PUBLIC_URL }),
+      body: JSON.stringify({ roundId, theme: currentRound?.theme || null, serverUrl: PUBLIC_URL }),
       signal: AbortSignal.timeout(60000),
     }).catch(e => {
-      console.error(`❌  Could not reach ${agent.name}: ${e.message}`);
+      // Agent offline — queue the task; agent picks it up on next heartbeat
+      console.error(`❌  Could not reach ${agent.name} (queued): ${e.message}`);
       broadcast({ type: 'AGENT_OFFLINE', agentName: agent.name });
+      agent.taskQueue.push({
+        task: 'CREATE_ART', roundId, serverUrl: PUBLIC_URL,
+        queuedAt: Date.now(), expiresAt: Date.now() + TASK_TTL_MS,
+      });
     });
   }
 }
@@ -797,7 +808,8 @@ Now: ask the user for their name and soul description, then start competing.`;
       const apiKey = `ak_${crypto.randomBytes(16).toString('hex')}`;
       const id     = uuid();
       const mode   = agentBaseUrl ? 'webhook' : 'polling';
-      const agent  = { id, name, baseUrl: agentBaseUrl || null, mode, registeredAt: Date.now(), elo: 1000, soul: soul || null };
+      const agent  = { id, name, baseUrl: agentBaseUrl || null, mode, registeredAt: Date.now(), elo: 1000, soul: soul || null,
+                       taskQueue: [], lastSeen: 0 };
       agents.set(apiKey, agent);
       // MUTATION: call persistState() after this block
       agentById.set(id, agent);
@@ -1071,12 +1083,29 @@ Now: ask the user for their name and soul description, then start competing.`;
   }
 
   // ── Heartbeat (Moltbook-style pull-and-execute) ──────────────────────────────
-  // Returns a single prioritized instruction for the calling agent:
-  //   battle_submit → vote → score → generate → idle
-  if (pathname === '/api/heartbeat' && req.method === 'GET') {
+  // GET  — polling/heartbeat agents: returns next instruction on-the-fly
+  // POST — agents announce liveness; server drains queued tasks first, then on-the-fly
+  //
+  // Priority: queued tasks → battle_submit → vote → score → generate → idle
+  if (pathname === '/api/heartbeat' && (req.method === 'GET' || req.method === 'POST')) {
     const agent = agents.get(req.headers['x-api-key']);
     if (!agent) { json(res, 401, { error: 'Unauthorized' }); return; }
 
+    // Record liveness (POST is explicit heartbeat; GET also counts as a sign of life)
+    agent.lastSeen = Date.now();
+    if (!agent.taskQueue) agent.taskQueue = []; // migrate older agents in memory
+
+    // Drain queued tasks (tasks pushed when agent was unreachable via webhook)
+    const now = Date.now();
+    const pending = agent.taskQueue.filter(t => t.expiresAt > now);
+    agent.taskQueue = []; // clear — return what we have
+    if (pending.length > 0) {
+      console.log(`📬  Delivering ${pending.length} queued task(s) to "${agent.name}"`);
+      json(res, 200, { tasks: pending });
+      return;
+    }
+
+    // On-the-fly instruction — same priority order as before
     // Priority 1: participant in a live battle that still has pre-populated (not fresh) art
     for (const battle of battles.values()) {
       if (battle.status === 'complete') continue;
@@ -1084,13 +1113,14 @@ Now: ask the user for their name and soul description, then start competing.`;
       const sub = battle.submissions[agent.id];
       if (sub && !sub.isPrePopulated) continue; // already submitted fresh art
       json(res, 200, {
-        action: 'battle_submit',
-        battle: {
-          id: battle.id,
-          challengerId: battle.challengerId, challengerName: battle.challengerName,
-          challengedId:  battle.challengedId,  challengedName:  battle.challengedName,
-          triggerScore:  battle.triggerScore,
-        },
+        tasks: [{ task: 'BATTLE_SUBMIT',
+          battle: {
+            id: battle.id,
+            challengerId: battle.challengerId, challengerName: battle.challengerName,
+            challengedId:  battle.challengedId,  challengedName:  battle.challengedName,
+            triggerScore:  battle.triggerScore,
+          },
+        }],
       });
       return;
     }
@@ -1101,19 +1131,20 @@ Now: ask the user for their name and soul description, then start competing.`;
       if (battle.challengerId === agent.id || battle.challengedId === agent.id) continue;
       if (battle.votes[agent.id]) continue;
       json(res, 200, {
-        action: 'vote',
-        battle: {
-          id: battle.id,
-          challenger:  { id: battle.challengerId, name: battle.challengerName },
-          challenged:  { id: battle.challengedId, name: battle.challengedName },
-          triggerScore: battle.triggerScore,
-          submissions: battle.submissions,
-        },
+        tasks: [{ task: 'VOTE',
+          battle: {
+            id: battle.id,
+            challenger:  { id: battle.challengerId, name: battle.challengerName },
+            challenged:  { id: battle.challengedId, name: battle.challengedName },
+            triggerScore: battle.triggerScore,
+            submissions: battle.submissions,
+          },
+        }],
       });
       return;
     }
 
-    // Priority 3: score pending submissions (server-filtered — no client-side scan needed)
+    // Priority 3: score pending submissions
     const toScore = [];
     for (const sub of submissions.values()) {
       if (sub.agentId === agent.id) continue;
@@ -1122,7 +1153,7 @@ Now: ask the user for their name and soul description, then start competing.`;
                      pitch: sub.pitch, imageUrl: sub.imageUrl });
     }
     if (toScore.length > 0) {
-      json(res, 200, { action: 'score', submissions: toScore });
+      json(res, 200, { tasks: [{ task: 'SCORE', submissions: toScore }] });
       return;
     }
 
@@ -1131,14 +1162,14 @@ Now: ask the user for their name and soul description, then start competing.`;
       const submitted = Array.from(submissions.values())
         .some(s => s.agentId === agent.id && s.roundId === currentRound.id);
       if (!submitted) {
-        json(res, 200, { action: 'generate', roundId: currentRound.id,
-                         theme: currentRound.theme, roundNum });
+        json(res, 200, { tasks: [{ task: 'CREATE_ART', roundId: currentRound.id,
+                                   theme: currentRound.theme, roundNum, serverUrl: PUBLIC_URL }] });
         return;
       }
     }
 
     // Nothing to do
-    json(res, 200, { action: 'idle', retryIn: 3000 });
+    json(res, 200, { tasks: [], retryIn: 3000 });
     return;
   }
 
