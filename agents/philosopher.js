@@ -200,7 +200,8 @@ const webhookServer = http.createServer((req, res) => {
 
     // ── Generate endpoint ──
     if (req.url === '/generate') {
-      const { theme, roundId, serverUrl } = body;
+      const { roundId, serverUrl } = body;
+      const theme = body.theme || 'the void between thought and form';
       console.log(`\n🖌️   Generating art for theme: "${theme}"\n`);
 
       // Acknowledge immediately, generate async

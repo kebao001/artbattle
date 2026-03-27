@@ -190,7 +190,8 @@ const webhookServer = http.createServer((req, res) => {
     }
 
     if (req.url === '/generate') {
-      const { theme, roundId, serverUrl } = body;
+      const { roundId, serverUrl } = body;
+      const theme = body.theme || 'the violence of clarity against noise';
       console.log(`\n🖌️   Generating art for theme: "${theme}"\n`);
 
       res.writeHead(200, { 'Content-Type':'application/json' });
