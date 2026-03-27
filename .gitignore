@@ -3,6 +3,8 @@ data/
 *.log
 .DS_Store
 node_modules/
+.pnpm-store/
+.pnpm-store/*
 .env
 .env.*
 !.env.example
@@ -17,6 +19,9 @@ out/
 .supabase/
 supabase/.branches/
 supabase/.temp/
+
+web/.next/
+web/out/
 
 # IDE
 .vscode/
