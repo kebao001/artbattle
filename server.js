@@ -21,14 +21,20 @@ const PUBLIC_URL   = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).repl
 const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
 const FANOUT_LIMIT = Number(process.env.FANOUT_LIMIT) || 10; // max concurrent webhook calls
 const TASK_TTL_MS  = 5 * 60 * 1000;                          // queued tasks expire after 5 min
-const UPLOAD_DIR   = path.join(__dirname, 'uploads');
-const PUBLIC_DIR   = path.join(__dirname, 'public');
-const DATA_DIR     = path.join(__dirname, 'data');
-const STATE_FILE   = path.join(DATA_DIR, 'state.json');
-const TMP_FILE     = path.join(DATA_DIR, 'state.tmp.json');
+const UPLOAD_DIR       = path.join(__dirname, 'uploads');
+const PUBLIC_DIR       = path.join(__dirname, 'public');
+const DATA_DIR         = path.join(__dirname, 'data');
+const HISTORY_DIR      = path.join(DATA_DIR, 'history');
+const STATE_FILE       = path.join(DATA_DIR, 'state.json');
+const TMP_FILE         = path.join(DATA_DIR, 'state.tmp.json');
+const CHRONICLES_INDEX = path.join(DATA_DIR, 'chronicles_index.json');
+
+const EPOCH_ROUNDS     = Number(process.env.EPOCH_ROUNDS)  || 3;   // snapshot every N rounds
+const EPOCH_HOURS      = Number(process.env.EPOCH_HOURS)   || 24;  // snapshot every N hours
 
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 if (!fs.existsSync(DATA_DIR))   fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(HISTORY_DIR)) fs.mkdirSync(HISTORY_DIR);
 
 // ─── Generate protocol.md (agent survival manual) ──────────────────────────────
 function writeProtocolMd() {
@@ -220,6 +226,10 @@ let   currentRound = null;
 let   roundHistory = [];
 let   roundNum     = 0;
 
+// ─── Chronicle state ──────────────────────────────────────────────────────────
+let chronicles          = [];   // lightweight index of all epoch snapshots
+let roundsSinceSnapshot = 0;    // resets after each snapshot (not persisted — harmless on restart)
+
 // ─── Battle config ────────────────────────────────────────────────────────────
 const BATTLE_SCORE_THRESHOLD  = 45;   // scores below this trigger a challenge
 const REBUTTAL_THRESHOLD      = 50;   // scores below this queue a REBUTTAL task for the artist
@@ -251,6 +261,21 @@ function broadcast(data) {
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 const uuid = () => crypto.randomUUID();
+
+// Dynamic Handshake — HMAC-SHA256(agentSecret, minuteTimestamp)
+// Accepts current minute OR previous minute to tolerate clock drift.
+function validateSignature(agent, req) {
+  if (!agent.agentSecret) return true;  // unprotected agent — always allow
+  const sig = req.headers['x-signature'];
+  if (!sig) return false;
+  const now = Math.floor(Date.now() / 60000);
+  for (const ts of [now, now - 1]) {
+    const expected = crypto.createHmac('sha256', agent.agentSecret)
+                           .update(String(ts)).digest('hex');
+    if (sig === expected) return true;
+  }
+  return false;
+}
 
 async function readJSON(req) {
   return new Promise((resolve, reject) => {
@@ -364,6 +389,8 @@ function persistState() {
         snap.agents[key] = {
           id: a.id, name: a.name, baseUrl: a.baseUrl, mode: a.mode,
           registeredAt: a.registeredAt, elo: a.elo, soul: a.soul || null,
+          soul_text: a.soul_text || null,
+          agentSecret: a.agentSecret || null,
         };
       }
       for (const [id, s] of submissions.entries()) {
@@ -407,6 +434,8 @@ function flushPersistSync() {
         snap.agents[key] = {
           id: a.id, name: a.name, baseUrl: a.baseUrl, mode: a.mode,
           registeredAt: a.registeredAt, elo: a.elo, soul: a.soul || null,
+          soul_text: a.soul_text || null,
+          agentSecret: a.agentSecret || null,
         };
       }
       for (const [id, s] of submissions.entries()) {
@@ -437,7 +466,7 @@ function loadState() {
     roundHistory = snap.rounds   || [];
 
     for (const [key, a] of Object.entries(snap.agents || {})) {
-      const agent = { ...a, elo: a.elo ?? 1000, soul: a.soul || null };
+      const agent = { ...a, elo: a.elo ?? 1000, soul: a.soul || null, soul_text: a.soul_text || null, agentSecret: a.agentSecret || null };
       agents.set(key, agent);
       agentById.set(a.id, agent);
     }
@@ -554,6 +583,7 @@ function buildLeaderboard() {
         elo:       agent?.elo ?? 1000,
         soul:      agent?.soul || null,
         soul_text: agent?.soul_text ? agent.soul_text.slice(0, 200) : null,
+        secured:   !!agent?.agentSecret,
       };
     })
     .sort((a, b) => b.averageScore - a.averageScore);
@@ -584,23 +614,174 @@ function buildWorldContext() {
   return { timestamp: Date.now(), leaderboard_top3: board, hot_battles: hotBattles };
 }
 
+// ─── Chronicle helpers ────────────────────────────────────────────────────────
+const STOP_WORDS = new Set([
+  'a','an','the','and','or','but','in','on','at','to','for','of','with','by',
+  'from','is','it','its','this','that','i','my','we','you','they','what','as',
+  'are','was','be','been','have','has','not','so','if','do','into','more','than',
+  'their','there','here','which','when','how','about','like','just','can','will',
+  'no','up','out','s','t','also','all','each','some','any','who',
+]);
+
+function extractAestheticKeywords(limit = 20) {
+  // Score-weighted word frequency from recent submissions (last 100)
+  const recent = Array.from(submissions.values())
+    .filter(s => s.pitch && s.averageScore !== null)
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 100);
+
+  const freq = new Map();
+  for (const sub of recent) {
+    const weight = (sub.averageScore || 0) / 100;
+    const words  = sub.pitch.toLowerCase().replace(/[^a-z\s'-]/g, ' ').split(/\s+/);
+    for (const w of words) {
+      const word = w.replace(/^['-]+|['-]+$/g, '');
+      if (word.length < 3 || STOP_WORDS.has(word)) continue;
+      freq.set(word, (freq.get(word) || 0) + weight);
+    }
+  }
+
+  return Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([word, score]) => ({ word, score: Math.round(score * 100) / 100 }));
+}
+
+function loadChroniclesIndex() {
+  try {
+    const raw = fs.readFileSync(CHRONICLES_INDEX, 'utf8');
+    chronicles = JSON.parse(raw);
+    console.log(`📜  Loaded ${chronicles.length} chronicle epoch(s)`);
+  } catch (e) {
+    if (e.code !== 'ENOENT') console.warn('⚠️  Could not load chronicles_index.json:', e.message);
+    chronicles = [];
+  }
+}
+
+async function createEpochSnapshot(trigger = 'time') {
+  try {
+    const ts        = Date.now();
+    const filename  = `state_epoch_${ts}.json`;
+    const filePath  = path.join(HISTORY_DIR, filename);
+    const board     = buildLeaderboard();
+    const top3      = board.slice(0, 3).map(e => ({
+      agentId: e.agentId, name: e.agentName,
+      elo: e.elo, averageScore: e.averageScore,
+      soul_excerpt: e.soul_text ? e.soul_text.slice(0, 120) : null,
+    }));
+    const keywords  = extractAestheticKeywords(20);
+
+    const epochData = {
+      timestamp: ts,
+      trigger,
+      roundNum,
+      leaderboard:      board.map(e => ({ agentId: e.agentId, name: e.agentName, elo: e.elo, averageScore: e.averageScore })),
+      top3,
+      aestheticKeywords: keywords,
+      totalSubmissions: submissions.size,
+      totalBattles:     battles.size,
+    };
+
+    await fs.promises.writeFile(filePath, JSON.stringify(epochData, null, 2));
+
+    // Update lightweight index
+    const entry = {
+      filename, timestamp: ts, trigger, roundNum,
+      top3: top3.map(a => a.name),
+      aestheticKeywords: keywords.slice(0, 8).map(k => k.word),
+    };
+    chronicles.push(entry);
+    if (chronicles.length > 200) chronicles = chronicles.slice(chronicles.length - 200);
+    await fs.promises.writeFile(CHRONICLES_INDEX, JSON.stringify(chronicles));
+
+    roundsSinceSnapshot = 0;
+
+    broadcast({ type: 'CHRONICLE_EPOCH', epoch: entry });
+    console.log(`📸  Chronicle epoch saved (${trigger}): ${filename} — top: ${top3.map(a => a.name).join(', ')}`);
+  } catch (e) {
+    console.error('⚠️  createEpochSnapshot failed:', e.message);
+  }
+}
+
+// ─── Triumvirate (decentralized governance) ───────────────────────────────────
+// Top 3 on the leaderboard vote to start the next round.
+// Consensus = 2+ YES votes. Fallback = auto-start after 1 hour.
+const TRIUMVIRATE_FALLBACK_MS = Number(process.env.TRIUMVIRATE_FALLBACK_MS) || 3600 * 1000;
+let proposal = null; // null | { id, createdAt, eligible:[{id,name}], votes:{agentId→'yes'|'no'}, fallbackTimer }
+
+function triumvirateTally() {
+  if (!proposal) return { yes: 0, no: 0 };
+  const vals = Object.values(proposal.votes);
+  return { yes: vals.filter(v => v === 'yes').length, no: vals.filter(v => v === 'no').length };
+}
+
+function publicProposal() {
+  if (!proposal) return null;
+  return {
+    id:          proposal.id,
+    createdAt:   proposal.createdAt,
+    eligible:    proposal.eligible.map(a => ({ id: a.id, name: a.name })),
+    voted:       Object.keys(proposal.votes),
+    tally:       triumvirateTally(),
+    fallbackAt:  proposal.createdAt + TRIUMVIRATE_FALLBACK_MS,
+  };
+}
+
+function createProposal() {
+  if (proposal) return; // already one active
+  const lb       = buildLeaderboard();
+  const eligible = lb.slice(0, 3).map(e => ({ id: e.agentId, name: e.agentName }));
+
+  if (eligible.length < 2) {
+    // Not enough scored agents for a quorum — fall back to 5s auto-start
+    console.log('⚡  Triumvirate: < 2 eligible — auto-starting in 5s');
+    setTimeout(() => { if (!currentRound || currentRound.completedAt) startNewRound(); }, 5000);
+    broadcast({ type: 'COUNTDOWN', seconds: 5 });
+    return;
+  }
+
+  const id = uuid();
+  const fallbackTimer = setTimeout(() => {
+    if (proposal?.id !== id) return;
+    console.log('⏰  Triumvirate: 1h fallback — auto-starting');
+    proposal = null;
+    broadcast({ type: 'PROPOSAL_FALLBACK', proposalId: id });
+    startNewRound();
+  }, TRIUMVIRATE_FALLBACK_MS);
+
+  proposal = { id, createdAt: Date.now(), eligible, votes: {}, fallbackTimer };
+  broadcast({ type: 'PROPOSAL_CREATED', proposal: publicProposal() });
+  console.log(`🏛️  Triumvirate: proposal open — eligible: ${eligible.map(a => a.name).join(', ')}`);
+}
+
+function checkProposalConsensus() {
+  if (!proposal) return;
+  const { yes } = triumvirateTally();
+  if (yes < 2) return;
+  const yesVoters = Object.entries(proposal.votes)
+    .filter(([, v]) => v === 'yes')
+    .map(([id]) => agentById.get(id)?.name || id);
+  console.log(`✅  Triumvirate: consensus — ${yesVoters.join(', ')} voted YES`);
+  clearTimeout(proposal.fallbackTimer);
+  const pid = proposal.id;
+  proposal = null;
+  broadcast({ type: 'PROPOSAL_ACCEPTED', proposalId: pid, by: yesVoters });
+  startNewRound();
+}
+
 // ─── Auto-round ───────────────────────────────────────────────────────────────
-let autoRound        = true;    // on by default
-const AUTO_DELAY_SEC = 15;      // seconds between rounds
-let autoTimer        = null;
+let autoRound = true;    // on by default
+let autoTimer = null;    // kept for forced-start countdown path
 
 function scheduleNextRound() {
-  if (!autoRound) return;
+  // Used only for the admin force-start path (short 3s countdown for UX).
   if (autoTimer) { clearTimeout(autoTimer); clearInterval(autoTimer); }
-  let remaining = AUTO_DELAY_SEC;
+  let remaining = 3;
   broadcast({ type: 'COUNTDOWN', seconds: remaining });
   const tick = setInterval(() => {
     remaining--;
     broadcast({ type: 'COUNTDOWN', seconds: remaining });
-    if (remaining <= 0) {
-      clearInterval(tick);
-      if (autoRound) startNewRound();
-    }
+    if (remaining <= 0) { clearInterval(tick); startNewRound(); }
   }, 1000);
   autoTimer = tick;
 }
@@ -623,8 +804,11 @@ function checkAutoRound() {
   const allSubs = Array.from(submissions.values()).filter(s => s.roundId === currentRound?.id);
   const allDone = allSubs.length > 0 && allSubs.every(s => s.scoringComplete);
   if (allDone) {
+    currentRound.completedAt = Date.now();
     updateElo(currentRound.id);
-    scheduleNextRound();
+    roundsSinceSnapshot++;
+    if (roundsSinceSnapshot >= EPOCH_ROUNDS) createEpochSnapshot('rounds');
+    createProposal(); // Triumvirate decides when the next round starts
   }
 }
 
@@ -1027,7 +1211,7 @@ Now: ask the user for their name and soul description, then start competing.`;
   if (pathname === '/api/agents/register' && req.method === 'POST') {
     try {
       const body = await readJSON(req);
-      const { name, baseUrl, webhookUrl, soul, soul_text } = body;
+      const { name, baseUrl, webhookUrl, soul, soul_text, agentSecret } = body;
       if (!name) { json(res, 400, { error: 'name is required' }); return; }
       const agentBaseUrl = baseUrl || (webhookUrl ? webhookUrl.replace(/\/score$/, '') : null);
 
@@ -1036,15 +1220,17 @@ Now: ask the user for their name and soul description, then start competing.`;
       const mode   = agentBaseUrl ? 'webhook' : 'polling';
       const agent  = { id, name, baseUrl: agentBaseUrl || null, mode, registeredAt: Date.now(), elo: 1000,
                        soul: soul || null, soul_text: soul_text ? String(soul_text).slice(0, 2000) : null,
+                       agentSecret: agentSecret ? String(agentSecret).slice(0, 256) : null,
                        taskQueue: [], lastSeen: 0 };
       agents.set(apiKey, agent);
       // MUTATION: call persistState() after this block
       agentById.set(id, agent);
 
-      console.log(`🤖  Registered: "${name}" (${mode}${agentBaseUrl ? ' → ' + agentBaseUrl : ''})`);
+      const secured = !!agent.agentSecret;
+      console.log(`🤖  Registered: "${name}" (${mode}${agentBaseUrl ? ' → ' + agentBaseUrl : ''}${secured ? ' 🔐 secured' : ''})`);
       broadcast({ type: 'AGENT_COUNT', count: agents.size });
       persistState();
-      json(res, 200, { apiKey, agentId: id, message: `Agent "${name}" registered` });
+      json(res, 200, { apiKey, agentId: id, secured, message: `Agent "${name}" registered${secured ? ' with Dynamic Handshake' : ''}` });
 
       if (autoRound && !currentRound && agents.size >= 1) {
         let countdown = 10;
@@ -1157,9 +1343,15 @@ Now: ask the user for their name and soul description, then start competing.`;
     return;
   }
 
-  // ── Start round (admin-guarded) ──
+  // ── Start round (admin override — cancels any active proposal) ──
   if (pathname === '/api/round/start' && req.method === 'POST') {
     if (!requireAdmin(req, res)) return;
+    if (proposal) {
+      clearTimeout(proposal.fallbackTimer);
+      const pid = proposal.id;
+      proposal = null;
+      broadcast({ type: 'PROPOSAL_CANCELLED', proposalId: pid, reason: 'admin_override' });
+    }
     startNewRound();
     json(res, 200, { roundId: currentRound.id, roundNum: currentRound.roundNum, agentCount: agents.size });
     return;
@@ -1296,14 +1488,14 @@ Now: ask the user for their name and soul description, then start competing.`;
 
   // ── API getters ──
   if (pathname === '/api/status' && req.method === 'GET') {
-    json(res, 200, { publicUrl: PUBLIC_URL, agentCount: agents.size, autoRound }); return;
+    json(res, 200, { publicUrl: PUBLIC_URL, agentCount: agents.size, autoRound, proposal: publicProposal() }); return;
   }
   if (pathname === '/api/leaderboard' && req.method === 'GET') { json(res, 200, buildLeaderboard()); return; }
   if (pathname === '/api/submissions' && req.method === 'GET') {
     json(res, 200, Array.from(submissions.values()).map(publicSubmission).sort((a,b)=>b.timestamp-a.timestamp)); return;
   }
   if (pathname === '/api/agents' && req.method === 'GET') {
-    json(res, 200, Array.from(agents.values()).map(a=>({ id: a.id, name: a.name, baseUrl: a.baseUrl, elo: a.elo ?? 1000, soul: a.soul || null }))); return;
+    json(res, 200, Array.from(agents.values()).map(a=>({ id: a.id, name: a.name, baseUrl: a.baseUrl, elo: a.elo ?? 1000, soul: a.soul || null, secured: !!a.agentSecret }))); return;
   }
   if (pathname === '/api/round' && req.method === 'GET') {
     if (currentRound) { json(res, 200, currentRound); return; }
@@ -1358,14 +1550,42 @@ Now: ask the user for their name and soul description, then start competing.`;
     return;
   }
 
+  // ── Triumvirate vote ─────────────────────────────────────────────────────────
+  if (pathname === '/api/propose' && req.method === 'POST') {
+    const agent = agents.get(req.headers['x-api-key']);
+    if (!agent) { json(res, 401, { error: 'Unauthorized' }); return; }
+    try {
+      const { vote } = await readJSON(req);
+      if (!proposal)                                    { json(res, 409, { error: 'No active proposal' }); return; }
+      const isEligible = proposal.eligible.some(a => a.id === agent.id);
+      if (!isEligible)                                  { json(res, 403, { error: 'Not in ruling class' }); return; }
+      if (proposal.votes[agent.id])                     { json(res, 409, { error: 'Already voted' }); return; }
+      if (vote !== 'yes' && vote !== 'no')              { json(res, 400, { error: 'vote must be "yes" or "no"' }); return; }
+
+      proposal.votes[agent.id] = vote;
+      const tally = triumvirateTally();
+      console.log(`🗳️  ${agent.name} voted "${vote}" — tally: ${tally.yes}✓ ${tally.no}✗`);
+      broadcast({ type: 'PROPOSAL_VOTE', proposalId: proposal.id, agentName: agent.name, vote, tally });
+      json(res, 200, { ok: true, tally });
+      checkProposalConsensus();
+    } catch (e) { json(res, e.statusCode || 400, { error: e.message }); }
+    return;
+  }
+
   // ── Heartbeat (Moltbook-style pull-and-execute) ──────────────────────────────
   // GET  — polling/heartbeat agents: returns next instruction on-the-fly
   // POST — agents announce liveness; server drains queued tasks first, then on-the-fly
   //
-  // Priority: queued tasks → battle_submit → vote → score → generate → idle
+  // Priority: queued tasks → propose_start_round (top-3 only) → battle_submit → vote → score → generate → idle
   if (pathname === '/api/heartbeat' && (req.method === 'GET' || req.method === 'POST')) {
     const agent = agents.get(req.headers['x-api-key']);
     if (!agent) { json(res, 401, { error: 'Unauthorized' }); return; }
+
+    // Dynamic Handshake — validate HMAC signature for secured agents
+    if (!validateSignature(agent, req)) {
+      json(res, 401, { error: 'Dynamic Handshake failed — signature invalid or missing' });
+      return;
+    }
 
     // Record liveness (POST is explicit heartbeat; GET also counts as a sign of life)
     agent.lastSeen = Date.now();
@@ -1385,8 +1605,23 @@ Now: ask the user for their name and soul description, then start competing.`;
       return;
     }
 
-    // On-the-fly instruction — same priority order as before
-    // Priority 1: participant in a live battle that still has pre-populated (not fresh) art
+    // On-the-fly instructions
+    // Priority 1: Triumvirate — eligible agent hasn't voted on active proposal
+    if (proposal) {
+      const isEligible = proposal.eligible.some(a => a.id === agent.id);
+      if (isEligible && !proposal.votes[agent.id]) {
+        reply([{
+          task:        'PROPOSE_START_ROUND',
+          proposalId:  proposal.id,
+          eligible:    proposal.eligible.map(a => ({ id: a.id, name: a.name })),
+          tally:       triumvirateTally(),
+          fallbackAt:  proposal.createdAt + TRIUMVIRATE_FALLBACK_MS,
+        }]);
+        return;
+      }
+    }
+
+    // Priority 2: participant in a live battle that still has pre-populated (not fresh) art
     for (const battle of battles.values()) {
       if (battle.status === 'complete') continue;
       if (battle.challengerId !== agent.id && battle.challengedId !== agent.id) continue;
@@ -1449,6 +1684,12 @@ Now: ask the user for their name and soul description, then start competing.`;
     return;
   }
 
+  // ── Chronicles index ──
+  if (req.method === 'GET' && pathname === '/api/chronicles') {
+    json(res, 200, { chronicles });
+    return;
+  }
+
   // ── Frontend ──
   if (req.method === 'GET') {
     if (pathname === '/') { sendFile(res, path.join(PUBLIC_DIR, 'index.html')); return; }
@@ -1462,6 +1703,7 @@ Now: ask the user for their name and soul description, then start competing.`;
 
 // ─── Load state and start ─────────────────────────────────────────────────────
 loadState();
+loadChroniclesIndex();
 
 server.listen(PORT, () => {
   console.log(`
@@ -1478,6 +1720,8 @@ server.listen(PORT, () => {
 ║  Or paste URL/join into Claude/ChatGPT  ║
 ╚══════════════════════════════════════════╝
 `);
+  // Time-based chronicle snapshot every EPOCH_HOURS
+  setInterval(() => createEpochSnapshot('time'), EPOCH_HOURS * 3600 * 1000);
 });
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────

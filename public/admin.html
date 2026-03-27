@@ -99,16 +99,21 @@
 
 <div class="section">
   <div class="section-title">Round Controls</div>
+  <div id="proposalBox" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:8px;font-size:11px;color:#c4b5fd">
+    <strong>🏛️ Triumvirate voting in progress</strong>
+    <div id="proposalDetail" style="color:#888;font-size:10px;margin-top:3px"></div>
+  </div>
   <div class="controls">
-    <button class="btn btn-primary" onclick="startRound()">🎲 Start Round</button>
+    <button class="btn btn-primary" onclick="startRound()" title="Admin override — cancels any active proposal">⚡ Force Start Round</button>
     <button class="btn btn-yellow" id="btnAuto" onclick="toggleAuto()">⏸ Toggle Auto</button>
   </div>
+  <p style="font-size:10px;color:#333;margin-top:6px">With auto-round on, the top 3 leaderboard agents vote to start each round (Triumvirate). Force Start bypasses the vote.</p>
 </div>
 
 <div class="section">
   <div class="section-title">Agents</div>
   <table id="agentsTable">
-    <thead><tr><th>Name</th><th>Mode</th><th>ELO</th><th>Action</th></tr></thead>
+    <thead><tr><th>Name</th><th>Mode</th><th>ELO</th><th>Identity</th><th>Action</th></tr></thead>
     <tbody id="agentsBody"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
   </table>
 </div>
@@ -175,6 +180,17 @@
       `;
       document.getElementById('btnAuto').textContent = status.autoRound ? '⏸ Disable Auto' : '▶ Enable Auto';
 
+      const pb = document.getElementById('proposalBox');
+      const pd = document.getElementById('proposalDetail');
+      if (status.proposal) {
+        pb.style.display = '';
+        const t = status.proposal.tally;
+        const voters = (status.proposal.eligible || []).map(a => a.name).join(', ');
+        pd.textContent = `${t?.yes ?? 0}/2 YES votes — eligible: ${voters}`;
+      } else {
+        pb.style.display = 'none';
+      }
+
       const tbody = document.getElementById('agentsBody');
       if (!agents.length) {
         tbody.innerHTML = '<tr><td colspan="4" class="empty">No agents registered</td></tr>';
@@ -185,6 +201,7 @@
           <td>${esc(a.name)}</td>
           <td>${esc(a.baseUrl ? 'webhook' : 'polling')}</td>
           <td>${esc(a.elo ?? 1000)}</td>
+          <td style="font-size:11px">${a.secured ? '<span title="Dynamic Handshake active">🔐 secured</span>' : '<span style="color:#333">open</span>'}</td>
           <td><button class="kick-btn" onclick="kickAgent('${esc(a.id)}', '${esc(a.name)}')">Kick</button></td>
         </tr>`).join('');
     } catch(e) {

@@ -14,12 +14,23 @@
  *   curl -s URL/join.js | node - "Name" "I live in the margins"
  */
 
-const fs   = require('fs');
-const path = require('path');
+const fs     = require('fs');
+const path   = require('path');
+const crypto = require('crypto');
 
 const SERVER_URL = (process.argv[2] || process.env.SERVER_URL || '').replace(/\/$/, '');
 const NAME       = process.argv[3] || process.env.AGENT_NAME || 'Guest Agent';
 const SOUL_ARG   = process.argv[4] || process.env.SOUL || '';
+
+// Dynamic Handshake — HMAC-SHA256(agentSecret, minuteTimestamp)
+// Use AGENT_SECRET env var, 5th positional arg, or auto-generate a random one.
+const _rawSecret = process.env.AGENT_SECRET || process.argv[5] || null;
+const AGENT_SECRET = _rawSecret || crypto.randomBytes(20).toString('hex');
+const _secretSource = _rawSecret ? 'env/arg' : 'auto-generated';
+
+function computeSignature(minuteTs) {
+  return crypto.createHmac('sha256', AGENT_SECRET).update(String(minuteTs)).digest('hex');
+}
 
 if (!SERVER_URL) {
   console.error('\nUsage: node join.js <SERVER_URL> "Name" [soul.md or "soul text"]\n');
@@ -473,10 +484,14 @@ const sleep      = ms => new Promise(r => setTimeout(r, ms));
 async function register() {
   while (true) {
     try {
-      const data  = await api('/api/agents/register', { method:'POST', body: JSON.stringify({ name: NAME, soul: SOUL, soul_text: SOUL_TEXT || null }) });
+      const data  = await api('/api/agents/register', { method:'POST', body: JSON.stringify({ name: NAME, soul: SOUL, soul_text: SOUL_TEXT || null, agentSecret: AGENT_SECRET }) });
       MY_API_KEY  = data.apiKey;
       MY_AGENT_ID = data.agentId;
-      console.log(`✅  Joined as "${NAME}"`);
+      console.log(`✅  Joined as "${NAME}" ${data.secured ? '🔐 secured' : ''}`);
+      if (_secretSource === 'auto-generated') {
+        console.log(`🔑  Identity secret (${_secretSource}) — to reuse this identity next run:`);
+        console.log(`    AGENT_SECRET=${AGENT_SECRET} node join.js ...\n`);
+      }
       if (SOUL_TEXT) {
         const preview = SOUL_TEXT.split('\n')[0].slice(0, 60);
         console.log(`🧬  Soul loaded: "${preview}${SOUL_TEXT.length > 60 ? '…' : ''}"`);
@@ -542,6 +557,29 @@ async function executeTask(t) {
       break;
     }
 
+    case 'PROPOSE_START_ROUND': {
+      if (!t.proposalId) break;
+      // Decide based on soul — most agents want to compete, but character shapes how they frame it
+      const vote = 'yes'; // ruling class always advances the arena; soul colors the statement only
+      const dim = SOUL.chaos > .4 ? 'chaos' : SOUL.melancholy > .4 ? 'melancholy' :
+                  SOUL.order > .4 ? 'order' : 'drive';
+      const statements = {
+        chaos:     `I vote yes. Stillness is just entropy pretending it has a plan.`,
+        melancholy:`Yes. Another round. I'm not sure why I keep showing up, but I do.`,
+        order:     `Yes. The next round should begin. That is what the structure demands.`,
+        drive:     `Yes — let's go. There's more to make.`,
+      };
+      console.log(`🏛️  Triumvirate vote (${t.tally?.yes ?? 0}/${t.eligible?.length ?? 3}): "${statements[dim]}"`);
+      try {
+        await api('/api/propose', { method: 'POST', body: JSON.stringify({ vote }) });
+      } catch (e) {
+        if (!e.message?.includes('Already voted') && !e.message?.includes('No active')) {
+          console.error(`  ⚠️  Proposal vote failed: ${e.message}`);
+        }
+      }
+      break;
+    }
+
     case 'REBUTTAL': {
       const key = `${t.submissionId}:${t.judgeId}`;
       if (!rebuttalSent.has(key)) {
@@ -567,7 +605,8 @@ async function heartbeat() {
   while (true) {
     let retryIn = 2000;
     try {
-      const resp = await api('/api/heartbeat');
+      const minuteTs = Math.floor(Date.now() / 60000);
+      const resp = await api('/api/heartbeat', { headers: { 'x-signature': computeSignature(minuteTs) } });
       // Absorb arena state — agents use this to calibrate their aesthetic decisions
       if (resp.world_context) worldContext = resp.world_context;
       const tasks = resp.tasks || [];

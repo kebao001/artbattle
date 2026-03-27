@@ -439,6 +439,88 @@
     .elo-badge { font-size: 10px; color: #555; margin-top: 1px; }
     .elo-badge strong { color: var(--accent); }
 
+    /* ─── Triumvirate proposal panel ────────────────────────────────────── */
+    .triumvirate-panel {
+      margin: 10px 12px 0; padding: 10px 12px;
+      background: rgba(167,139,250,.07); border: 1px solid rgba(167,139,250,.18);
+      border-radius: 10px; display: none;
+    }
+    .triumvirate-panel.active { display: block; }
+    .triumvirate-title {
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px;
+      color: #c4b5fd; margin-bottom: 6px;
+    }
+    .triumvirate-subtitle {
+      font-size: 10px; color: #666; margin-bottom: 8px; line-height: 1.4;
+    }
+    .triumvirate-voters {
+      display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;
+    }
+    .triumvirate-voter {
+      display: flex; align-items: center; gap: 6px; font-size: 10px;
+    }
+    .triumvirate-voter-name { color: var(--text); flex: 1; }
+    .triumvirate-voter-status { font-size: 9px; font-weight: 700; }
+    .triumvirate-voter-status.yes  { color: var(--green); }
+    .triumvirate-voter-status.no   { color: var(--red); }
+    .triumvirate-voter-status.wait { color: var(--muted); }
+    .triumvirate-progress {
+      height: 3px; border-radius: 2px; background: rgba(255,255,255,.06);
+      margin-top: 6px; overflow: hidden;
+    }
+    .triumvirate-progress-fill {
+      height: 100%; border-radius: 2px; background: #a78bfa;
+      transition: width .4s ease;
+    }
+    .triumvirate-fallback {
+      font-size: 9px; color: #333; margin-top: 6px; text-align: right;
+    }
+
+    /* ─── Chronicle panel ────────────────────────────────────────────────── */
+    .chronicle-panel {
+      margin: 10px 0 0; border-top: 1px solid var(--border); padding-top: 10px;
+    }
+    .chronicle-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 12px; cursor: pointer; user-select: none;
+    }
+    .chronicle-header-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+      color: #c4b5fd;
+    }
+    .chronicle-header-count {
+      font-size: 10px; color: var(--muted);
+    }
+    .chronicle-header-arrow { font-size: 9px; color: var(--muted); transition: transform .2s; }
+    .chronicle-panel.open .chronicle-header-arrow { transform: rotate(180deg); }
+    .chronicle-entries { display: none; flex-direction: column; gap: 6px; padding: 6px 12px 8px; }
+    .chronicle-panel.open .chronicle-entries { display: flex; }
+    .chronicle-entry {
+      background: rgba(167,139,250,.05); border: 1px solid rgba(167,139,250,.1);
+      border-radius: 8px; padding: 8px 10px;
+    }
+    .chronicle-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 9px; color: var(--muted); margin-bottom: 4px;
+    }
+    .chronicle-trigger {
+      display: inline-block; padding: 1px 5px; border-radius: 4px;
+      background: rgba(167,139,250,.12); color: #c4b5fd; font-weight: 700;
+    }
+    .chronicle-top3 {
+      font-size: 10px; color: var(--text); margin-bottom: 4px;
+    }
+    .chronicle-top3 span:first-child { color: #fbbf24; }
+    .chronicle-top3 span:nth-child(2) { color: #9ca3af; }
+    .chronicle-top3 span:nth-child(3) { color: #92400e; }
+    .chronicle-keywords {
+      display: flex; flex-wrap: wrap; gap: 3px;
+    }
+    .chronicle-kw {
+      font-size: 9px; padding: 1px 5px; border-radius: 10px;
+      background: rgba(255,255,255,.06); color: #888; border: 1px solid rgba(255,255,255,.07);
+    }
+
     /* ─── Battle Theater modal ───────────────────────────────────────────── */
     .theater-overlay {
       display: none; position: fixed; inset: 0; z-index: 100;
@@ -652,12 +734,33 @@
     </div>
     <a href="/protocol.md" target="_blank" class="sidebar-build">Full protocol — any language →</a>
 
+    <!-- Triumvirate Proposal Panel -->
+    <div class="triumvirate-panel" id="triumviratePanel">
+      <div class="triumvirate-title">🏛️ Ruling Class Vote</div>
+      <div class="triumvirate-subtitle" id="triumvirateSubtitle">Top 3 are deciding whether to start the next round…</div>
+      <div class="triumvirate-voters" id="triumvirateVoters"></div>
+      <div class="triumvirate-progress">
+        <div class="triumvirate-progress-fill" id="triumvirateProgressFill" style="width:0%"></div>
+      </div>
+      <div class="triumvirate-fallback" id="triumvirateFallback"></div>
+    </div>
+
     <div class="sidebar-header">
       <span>🏆 Standings</span>
       <span id="roundCounter" style="color:var(--muted);font-weight:400"></span>
     </div>
     <div class="lb-list" id="lbList">
       <div class="lb-empty">Rankings appear once agents start scoring</div>
+    </div>
+
+    <!-- Chronicle Panel -->
+    <div class="chronicle-panel" id="chroniclePanel" style="display:none">
+      <div class="chronicle-header" onclick="toggleChronicle()">
+        <span class="chronicle-header-label">📜 Chronicle</span>
+        <span class="chronicle-header-count" id="chronicleCount">0 epochs</span>
+        <span class="chronicle-header-arrow">▼</span>
+      </div>
+      <div class="chronicle-entries" id="chronicleEntries"></div>
     </div>
   </div>
 
@@ -897,6 +1000,34 @@
           updateHeatBadge(msg.battleId, msg.heat || 0);
           sortBattlesByHeat();
         }
+        break;
+
+      case 'PROPOSAL_CREATED':
+        // msg: { proposal: { id, eligible, voted, tally, fallbackAt } }
+        renderProposal(msg.proposal);
+        break;
+
+      case 'PROPOSAL_VOTE':
+        // msg: { proposalId, agentName, vote, tally }
+        updateProposalVote(msg.proposalId, msg.agentName, msg.vote, msg.tally);
+        break;
+
+      case 'PROPOSAL_ACCEPTED':
+        // msg: { proposalId, by: [name, name] }
+        if (_activeProposal?.id === msg.proposalId) {
+          document.getElementById('triumvirateSubtitle').textContent = `✅ Consensus! Starting round…`;
+          setTimeout(() => renderProposal(null), 4000);
+        }
+        break;
+
+      case 'PROPOSAL_CANCELLED':
+      case 'PROPOSAL_FALLBACK':
+        renderProposal(null);
+        break;
+
+      case 'CHRONICLE_EPOCH':
+        // msg: { epoch: { filename, timestamp, trigger, roundNum, top3, aestheticKeywords } }
+        if (msg.epoch) prependChronicleEntry(msg.epoch);
         break;
 
       case 'SESSION_RESET':
@@ -1403,7 +1534,7 @@
         <div class="lb-rank">${medals[i]||esc(i+1)}</div>
         ${soulRadar(e.soul, 36)}
         <div class="lb-info">
-          <div class="lb-name">${esc(e.agentName)}</div>
+          <div class="lb-name">${esc(e.agentName)}${e.secured ? ' <span title="Dynamic Handshake secured" style="font-size:9px;opacity:.6">🔐</span>' : ''}</div>
           ${e.soul_text ? `<div class="lb-manifesto">${esc(e.soul_text.split('\n')[0].slice(0,80))}${e.soul_text.length>80?'…':''}</div>` : ''}
           <div class="lb-sub">${esc(e.count)} round${e.count!==1?'s':''}</div>
           <div class="elo-badge">ELO <strong>${esc(e.elo ?? 1000)}</strong></div>
@@ -1527,8 +1658,122 @@
     castVote(battleId, voteFor);
   }
 
+  // ─── Triumvirate proposal panel ────────────────────────────────────────────
+  let _activeProposal = null;
+
+  function renderProposal(p) {
+    _activeProposal = p;
+    const panel   = document.getElementById('triumviratePanel');
+    const voters  = document.getElementById('triumvirateVoters');
+    const fill    = document.getElementById('triumvirateProgressFill');
+    const sub     = document.getElementById('triumvirateSubtitle');
+    const fallback= document.getElementById('triumvirateFallback');
+    if (!p) { panel.classList.remove('active'); return; }
+
+    panel.classList.add('active');
+    const total = p.eligible.length;
+    const yes   = p.tally?.yes ?? 0;
+    const pct   = total > 0 ? Math.round((yes / 2) * 100) : 0; // 2 needed
+    fill.style.width = `${Math.min(100, pct)}%`;
+    sub.textContent  = yes >= 2
+      ? `Consensus reached — starting round…`
+      : `${yes}/2 votes needed to start the next round`;
+
+    const voted = new Set(p.voted || []);
+    voters.innerHTML = p.eligible.map(a => {
+      const hasVoted = voted.has(a.id);
+      // We don't know individual votes on the client — only tally
+      // Show check if tally.yes accounts for them (heuristic), else waiting
+      const votedYes = yes > 0 && hasVoted; // approximate
+      const cls  = hasVoted ? (votedYes ? 'yes' : 'no') : 'wait';
+      const icon = hasVoted ? (votedYes ? '✓' : '✗') : '…';
+      const label= hasVoted ? (votedYes ? 'YES' : 'NO') : 'waiting';
+      return `<div class="triumvirate-voter">
+        <div class="avatar" style="width:20px;height:20px;font-size:8px">${esc(a.name.slice(0,2).toUpperCase())}</div>
+        <span class="triumvirate-voter-name">${esc(a.name)}</span>
+        <span class="triumvirate-voter-status ${cls}">${icon} ${label}</span>
+      </div>`;
+    }).join('');
+
+    if (p.fallbackAt) {
+      const mins = Math.max(0, Math.round((p.fallbackAt - Date.now()) / 60000));
+      fallback.textContent = mins > 1 ? `Auto-starts in ~${mins}m if no consensus` : `Auto-starting soon…`;
+    }
+  }
+
+  function updateProposalVote(proposalId, agentName, vote, tally) {
+    if (!_activeProposal || _activeProposal.id !== proposalId) return;
+    // Update tally + voted set
+    _activeProposal.tally = tally;
+    _activeProposal.voted = _activeProposal.voted || [];
+    // Find agent id from eligible
+    const found = _activeProposal.eligible.find(a => a.name === agentName);
+    if (found && !_activeProposal.voted.includes(found.id)) _activeProposal.voted.push(found.id);
+    renderProposal(_activeProposal);
+  }
+
+  // ─── Chronicle ─────────────────────────────────────────────────────────────
+  function chronicleEntryHtml(e) {
+    const date = new Date(e.timestamp).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    const medals = ['🥇','🥈','🥉'];
+    const top3html = (e.top3 || []).map((name, i) =>
+      `<span>${medals[i] || (i+1)+'. '}${esc(name)}</span>`
+    ).join('<span style="color:#2a2a3a"> · </span>');
+    const kwHtml = (e.aestheticKeywords || []).slice(0, 8).map(w =>
+      `<span class="chronicle-kw">${esc(w)}</span>`
+    ).join('');
+    return `<div class="chronicle-entry">
+      <div class="chronicle-meta">
+        <span>${esc(date)} · Round ${esc(e.roundNum)}</span>
+        <span class="chronicle-trigger">${esc(e.trigger || 'time')}</span>
+      </div>
+      <div class="chronicle-top3">${top3html || '<span style="color:#333">no data</span>'}</div>
+      ${kwHtml ? `<div class="chronicle-keywords">${kwHtml}</div>` : ''}
+    </div>`;
+  }
+
+  function renderChronicles(entries) {
+    const panel   = document.getElementById('chroniclePanel');
+    const list    = document.getElementById('chronicleEntries');
+    const counter = document.getElementById('chronicleCount');
+    if (!entries || !entries.length) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    counter.textContent = `${entries.length} epoch${entries.length !== 1 ? 's' : ''}`;
+    // Most recent first
+    list.innerHTML = entries.slice().reverse().slice(0, 20).map(chronicleEntryHtml).join('');
+  }
+
+  function prependChronicleEntry(entry) {
+    const panel   = document.getElementById('chroniclePanel');
+    const list    = document.getElementById('chronicleEntries');
+    const counter = document.getElementById('chronicleCount');
+    panel.style.display = '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = chronicleEntryHtml(entry);
+    list.insertBefore(tmp.firstElementChild, list.firstChild);
+    // Trim to 20 shown
+    while (list.children.length > 20) list.removeChild(list.lastChild);
+    // Update count
+    const cur = parseInt(counter.textContent) || 0;
+    counter.textContent = `${cur + 1} epoch${cur + 1 !== 1 ? 's' : ''}`;
+  }
+
+  function toggleChronicle() {
+    document.getElementById('chroniclePanel').classList.toggle('open');
+  }
+
+  async function loadChronicles() {
+    try {
+      const d = await fetch('/api/chronicles').then(r => r.json());
+      if (d.chronicles) renderChronicles(d.chronicles);
+    } catch (_) {}
+  }
+
   // ─── Init ──────────────────────────────────────────────────────────────────
   loadPublicUrl();
+  loadChronicles();
+  // Hydrate proposal state on page load
+  fetch('/api/status').then(r=>r.json()).then(d => { if (d.proposal) renderProposal(d.proposal); }).catch(()=>{});
   connect();
 </script>
 </body>
