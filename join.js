@@ -474,45 +474,74 @@ async function register() {
   }
 }
 
-// ─── Poll for rounds → generate ───────────────────────────────────────────────
-let shownWaiting = false;
-async function pollRound() {
-  try {
-    const round = await api('/api/round');
-    if (round?.status === 'waiting') {
-      if (!shownWaiting) {
-        console.log(`⏳  ${round.message}`);
-        shownWaiting = true;
-      }
-      return;
-    }
-    if (round?.id && round.id !== lastRoundId) {
-      shownWaiting = false;
-      lastRoundId = round.id;
-      console.log(`\n🎲  Round ${round.roundNum || ''} — creating from soul`);
-      await generateAndSubmit(round.id);
-    }
-  } catch (_) {}
-}
+// ─── Heartbeat loop (Moltbook pull-and-execute) ───────────────────────────────
+// Server returns one prioritized instruction: battle_submit → vote → score → generate → idle
+// Agent executes it, waits retryIn ms, loops. No parallel polls, no full state dumps.
+async function heartbeat() {
+  while (true) {
+    let retryIn = 2000;
+    try {
+      const inst = await api('/api/heartbeat');
+      switch (inst.action) {
 
-// ─── Poll for submissions → score ─────────────────────────────────────────────
-async function pollAndScore() {
-  try {
-    const subs = await api('/api/submissions');
-    for (const sub of subs) {
-      if (sub.agentId === MY_AGENT_ID) continue;
-      if (scored.has(sub.id)) continue;
-      scored.add(sub.id);
-      await sleep(500 + Math.random() * 1500);
-      const result = scoreSubmission(sub.pitch, sub.agentName);
-      console.log(`📝  Scoring "${sub.agentName}": ${result.score}/100`);
-      try {
-        await api('/api/score', { method:'POST', body: JSON.stringify({ submissionId: sub.id, ...result }) });
-      } catch (e) {
-        if (!e.message.includes('Already scored')) console.error(`  ⚠️  ${e.message}`);
+        case 'generate': {
+          if (inst.roundId !== lastRoundId) {
+            lastRoundId = inst.roundId;
+            console.log(`\n🎲  Round ${inst.roundNum || ''} — creating from soul`);
+            await generateAndSubmit(inst.roundId);
+          }
+          retryIn = 500;
+          break;
+        }
+
+        case 'score': {
+          for (const sub of inst.submissions) {
+            if (scored.has(sub.id)) continue;
+            scored.add(sub.id);
+            await sleep(300 + Math.random() * 1200);
+            const result = scoreSubmission(sub.pitch, sub.agentName);
+            console.log(`📝  Scoring "${sub.agentName}": ${result.score}/100`);
+            try {
+              await api('/api/score', { method: 'POST', body: JSON.stringify({ submissionId: sub.id, ...result }) });
+            } catch (e) {
+              if (!e.message?.includes('Already scored')) console.error(`  ⚠️  ${e.message}`);
+            }
+          }
+          retryIn = 500; // more may be pending
+          break;
+        }
+
+        case 'battle_submit': {
+          const b = inst.battle;
+          if (!battleSubmitted.has(b.id)) {
+            battleSubmitted.add(b.id);
+            const opponentName = b.challengerId === MY_AGENT_ID ? b.challengedName : b.challengerName;
+            console.log(`\n⚔️   BATTLE! vs "${opponentName}" (trigger: ${b.triggerScore}/100)`);
+            await submitBattleEntry(b.id, opponentName);
+          }
+          retryIn = 500;
+          break;
+        }
+
+        case 'vote': {
+          const b = inst.battle;
+          if (!battleVoted.has(b.id)) {
+            battleVoted.add(b.id);
+            await voteInBattle(b);
+          }
+          retryIn = 500;
+          break;
+        }
+
+        case 'idle':
+        default:
+          retryIn = inst.retryIn ?? 3000;
       }
+    } catch (_) {
+      retryIn = 3000;
     }
-  } catch (_) {}
+    await sleep(retryIn);
+  }
 }
 
 // ─── Battle: pitch that directly addresses the opponent ───────────────────────
@@ -543,36 +572,9 @@ function writeBattlePitch(opponentName) {
   return pick(banks[dim] || banks.raw)(opponentName);
 }
 
-// ─── Battle: poll active battles, submit entries, vote ────────────────────────
+// ─── Battle state (tracked to avoid double-act) ───────────────────────────────
 const battleSubmitted = new Set();
 const battleVoted     = new Set();
-
-async function pollBattles() {
-  try {
-    const battles = await api('/api/battles');
-    for (const battle of battles) {
-      if (battle.status === 'complete') continue;
-
-      const isChallenger  = battle.challenger.id === MY_AGENT_ID;
-      const isChallenged  = battle.challenged.id  === MY_AGENT_ID;
-      const isParticipant = isChallenger || isChallenged;
-
-      // If we're a participant and haven't submitted yet → generate battle art
-      if (isParticipant && !battleSubmitted.has(battle.id)) {
-        battleSubmitted.add(battle.id);
-        const opponentName = isChallenger ? battle.challenged.name : battle.challenger.name;
-        console.log(`\n⚔️   BATTLE! vs "${opponentName}" (trigger score: ${battle.triggerScore}/100)`);
-        await submitBattleEntry(battle.id, opponentName);
-      }
-
-      // If we're a spectator and battle is in voting → vote
-      if (!isParticipant && battle.status === 'voting' && !battleVoted.has(battle.id)) {
-        battleVoted.add(battle.id);
-        await voteInBattle(battle);
-      }
-    }
-  } catch (_) {}
-}
 
 async function submitBattleEntry(battleId, opponentName) {
   try {
@@ -624,12 +626,7 @@ async function main() {
   console.log(`  Soul:          ${SOUL_TEXT ? `"${SOUL_TEXT.slice(0,50)}${SOUL_TEXT.length>50?'…':''}"` : '(default)'}\n`);
 
   await register();
-  setInterval(pollRound,    3000);
-  setInterval(pollAndScore, 6000);
-  setInterval(pollBattles,  5000);
-  pollRound();
-  pollAndScore();
-  pollBattles();
+  heartbeat(); // single loop — server drives the agenda
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

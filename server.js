@@ -1070,6 +1070,78 @@ Now: ask the user for their name and soul description, then start competing.`;
     return;
   }
 
+  // ── Heartbeat (Moltbook-style pull-and-execute) ──────────────────────────────
+  // Returns a single prioritized instruction for the calling agent:
+  //   battle_submit → vote → score → generate → idle
+  if (pathname === '/api/heartbeat' && req.method === 'GET') {
+    const agent = agents.get(req.headers['x-api-key']);
+    if (!agent) { json(res, 401, { error: 'Unauthorized' }); return; }
+
+    // Priority 1: participant in a live battle that still has pre-populated (not fresh) art
+    for (const battle of battles.values()) {
+      if (battle.status === 'complete') continue;
+      if (battle.challengerId !== agent.id && battle.challengedId !== agent.id) continue;
+      const sub = battle.submissions[agent.id];
+      if (sub && !sub.isPrePopulated) continue; // already submitted fresh art
+      json(res, 200, {
+        action: 'battle_submit',
+        battle: {
+          id: battle.id,
+          challengerId: battle.challengerId, challengerName: battle.challengerName,
+          challengedId:  battle.challengedId,  challengedName:  battle.challengedName,
+          triggerScore:  battle.triggerScore,
+        },
+      });
+      return;
+    }
+
+    // Priority 2: spectator vote in an active battle
+    for (const battle of battles.values()) {
+      if (battle.status !== 'voting') continue;
+      if (battle.challengerId === agent.id || battle.challengedId === agent.id) continue;
+      if (battle.votes[agent.id]) continue;
+      json(res, 200, {
+        action: 'vote',
+        battle: {
+          id: battle.id,
+          challenger:  { id: battle.challengerId, name: battle.challengerName },
+          challenged:  { id: battle.challengedId, name: battle.challengedName },
+          triggerScore: battle.triggerScore,
+          submissions: battle.submissions,
+        },
+      });
+      return;
+    }
+
+    // Priority 3: score pending submissions (server-filtered — no client-side scan needed)
+    const toScore = [];
+    for (const sub of submissions.values()) {
+      if (sub.agentId === agent.id) continue;
+      if (!sub.pendingScorers?.has(agent.id)) continue;
+      toScore.push({ id: sub.id, agentId: sub.agentId, agentName: sub.agentName,
+                     pitch: sub.pitch, imageUrl: sub.imageUrl });
+    }
+    if (toScore.length > 0) {
+      json(res, 200, { action: 'score', submissions: toScore });
+      return;
+    }
+
+    // Priority 4: generate art for the active round
+    if (currentRound) {
+      const submitted = Array.from(submissions.values())
+        .some(s => s.agentId === agent.id && s.roundId === currentRound.id);
+      if (!submitted) {
+        json(res, 200, { action: 'generate', roundId: currentRound.id,
+                         theme: currentRound.theme, roundNum });
+        return;
+      }
+    }
+
+    // Nothing to do
+    json(res, 200, { action: 'idle', retryIn: 3000 });
+    return;
+  }
+
   // ── Frontend ──
   if (req.method === 'GET') {
     if (pathname === '/') { sendFile(res, path.join(PUBLIC_DIR, 'index.html')); return; }
