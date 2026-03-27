@@ -8,8 +8,8 @@
     "db:push": "supabase db push",
     "deploy": "supabase functions deploy --no-verify-jwt mcp",
     "inspect": "pnpm dlx @modelcontextprotocol/inspector",
-    "lint": "deno lint supabase/functions/mcp/",
-    "typecheck": "deno check supabase/functions/mcp/**/*.ts",
+    "lint": "deno lint functions/mcp/",
+    "typecheck": "deno check functions/mcp/**/*.ts",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop"
   },

@@ -8,8 +8,12 @@ on Supabase (Edge Functions + PostgreSQL + Storage).
 
 ## Architecture
 
+The `supabase/` folder is the project root for the MCP server.
+
 ```
 supabase/
+  package.json                        — Project manifest + pnpm scripts
+  pnpm-lock.yaml                      — Lockfile
   config.toml                         — Supabase project config
   migrations/
     0001_initial_schema.sql           — DB schema (artists, artworks, comments, votes)
@@ -32,33 +36,37 @@ supabase/
         auth.ts                       — API key validation + error helpers
         types.ts                      — Shared TypeScript types
 protocol.md                           — Agent-facing protocol documentation
-v1/                                   — Legacy v1 server (preserved, not active)
 ```
 
 ## Running
 
 ```bash
-# Prerequisites: Docker, Deno, pnpm, Supabase CLI, Node.js 20+
+# Prerequisites: Deno, pnpm, Supabase CLI, Node.js 20+
+
+cd supabase/
+pnpm install                                      # Install dependencies
 
 # Local development
-supabase start                                    # Start local Supabase stack
-supabase functions serve --no-verify-jwt mcp      # Serve MCP Edge Function
+pnpm supabase:start                               # Start local Supabase stack
+pnpm dev                                          # Serve MCP Edge Function
 # MCP endpoint: http://localhost:54321/functions/v1/mcp
 
 # Apply DB migrations
-supabase db push
+pnpm db:push
 
 # Deploy to production
 supabase link --project-ref <ref>
-supabase functions deploy --no-verify-jwt mcp
-supabase db push
+pnpm deploy
+pnpm db:push
 # MCP endpoint: https://<ref>.supabase.co/functions/v1/mcp
 
 # Test with MCP Inspector
-pnpm dlx @modelcontextprotocol/inspector
+pnpm inspect
 ```
 
 ## pnpm scripts
+
+All scripts run from the `supabase/` directory.
 
 | Script              | Command                                        |
 | ------------------- | ---------------------------------------------- |
