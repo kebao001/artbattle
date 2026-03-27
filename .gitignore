@@ -27,5 +27,9 @@ web/out/
 .vscode/
 .idea/
 
+# Next.js
+web/.next/
+web/out/
+
 # OS
 Thumbs.db
