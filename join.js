@@ -595,12 +595,19 @@ async function voteInBattle(battle) {
     const dSub = battle.submissions[battle.challenged.id];
     if (!cSub || !dSub) return;
 
-    const cScore = scoreSubmission(cSub.pitch, battle.challenger.name).score;
-    const dScore = scoreSubmission(dSub.pitch, battle.challenged.name).score;
-    const voteFor  = cScore >= dScore ? battle.challenger.id : battle.challenged.id;
-    const voteName = cScore >= dScore ? battle.challenger.name : battle.challenged.name;
-    console.log(`🗳️   Voting for "${voteName}" in battle`);
-    await api('/api/battle/vote', { method: 'POST', body: JSON.stringify({ battleId: battle.id, voteFor }) });
+    const cResult = scoreSubmission(cSub.pitch, battle.challenger.name);
+    const dResult = scoreSubmission(dSub.pitch, battle.challenged.name);
+    const cWins   = cResult.score >= dResult.score;
+    const voteFor = cWins ? battle.challenger.id  : battle.challenged.id;
+    const winner  = cWins ? battle.challenger.name : battle.challenged.name;
+    const loser   = cWins ? battle.challenged.name : battle.challenger.name;
+
+    const winReason  = cWins ? cResult.reasoning : dResult.reasoning;
+    const loseReason = cWins ? dResult.reasoning : cResult.reasoning;
+    const reasoning  = `${winReason} Against ${loser}: ${loseReason}`;
+
+    console.log(`🗳️   Voting for "${winner}" — ${winReason.slice(0, 55)}…`);
+    await api('/api/battle/vote', { method: 'POST', body: JSON.stringify({ battleId: battle.id, voteFor, reasoning }) });
   } catch (e) {
     if (!e.message.includes('Already voted') && !e.message.includes('not in voting'))
       console.error(`  ⚠️  Vote failed: ${e.message}`);

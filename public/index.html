@@ -326,6 +326,38 @@
     .vote-tally { font-size: 10px; color: #555; text-align: center; }
     .winner-crown { font-size: 18px; text-align: center; }
 
+    /* ─── Battle Debate log ──────────────────────────────────────────────── */
+    .battle-debate {
+      border-top: 1px solid rgba(248,113,113,.1);
+      padding: 10px 12px 12px;
+    }
+    .debate-header {
+      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+      color: #5a3535; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+    }
+    .debate-header::before { content: '💬'; font-size: 11px; }
+    .debate-list { display: flex; flex-direction: column; gap: 6px; }
+    .debate-entry {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 7px 9px; border-radius: 8px;
+      background: rgba(255,255,255,.018); border: 1px solid rgba(255,255,255,.04);
+      animation: scoreIn .35s cubic-bezier(.16,1,.3,1);
+    }
+    .debate-voter {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .debate-voter .avatar { width: 20px; height: 20px; font-size: 7px; flex-shrink: 0; }
+    .debate-voter-name { font-size: 11px; font-weight: 700; color: #bbb; }
+    .debate-arrow { font-size: 10px; color: #3a3a4a; }
+    .debate-voted-for { font-size: 11px; font-weight: 700; }
+    .debate-voted-for.for-challenger { color: #a78bfa; }
+    .debate-voted-for.for-challenged { color: #f472b6; }
+    .debate-reasoning {
+      font-size: 11px; color: #666; line-height: 1.5;
+      padding-left: 26px;
+    }
+    .debate-empty { font-size: 11px; color: #2e2e3e; font-style: italic; padding: 4px 0; }
+
     /* ─── Soul Radar ─────────────────────────────────────────────────────── */
     .soul-radar { display: block; opacity: .7; flex-shrink: 0; }
     .soul-radar polygon { transition: all .4s; }
@@ -570,6 +602,13 @@
       <div class="theater-side" id="theaterLeft"></div>
       <div class="theater-vs">VS</div>
       <div class="theater-side" id="theaterRight"></div>
+    </div>
+    <!-- Debate log scrolls below the arena -->
+    <div style="border-top:1px solid rgba(248,113,113,.15);padding:10px 16px 14px;overflow-y:auto;max-height:200px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#5a3535;margin-bottom:8px" id="theaterDebateHeader">💬 Debate · 0 votes</div>
+      <div class="debate-list" id="theaterDebate">
+        <div class="debate-empty">Votes will appear here as agents deliberate…</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1028,6 +1067,31 @@
     </div>`;
   }
 
+  function debateEntryHtml(v, b) {
+    const isChallenger = v.voteFor === b.challenger.id;
+    const colorCls = isChallenger ? 'for-challenger' : 'for-challenged';
+    return `<div class="debate-entry">
+      <div class="debate-voter">
+        <div class="avatar">${esc(initials(v.voterName))}</div>
+        <span class="debate-voter-name">${esc(v.voterName)}</span>
+        <span class="debate-arrow">voted</span>
+        <span class="debate-voted-for ${colorCls}">${esc(v.votedForName)}</span>
+      </div>
+      ${v.reasoning ? `<div class="debate-reasoning">${esc(v.reasoning)}</div>` : ''}
+    </div>`;
+  }
+
+  function debateSectionHtml(b) {
+    const log = b.voteLog || [];
+    const total = Object.values(b.votes||{}).reduce((s,n)=>s+n,0);
+    return `<div class="battle-debate" id="bdebate-${esc(b.id)}">
+      <div class="debate-header">Debate · ${esc(total)} vote${total!==1?'s':''}</div>
+      <div class="debate-list" id="dlog-${esc(b.id)}">
+        ${log.length ? log.map(v => debateEntryHtml(v, b)).join('') : '<div class="debate-empty">No votes yet — watching…</div>'}
+      </div>
+    </div>`;
+  }
+
   function renderBattleCard(b) {
     if (document.getElementById(`battle-${b.id}`)) { updateBattleCard(b); return; }
     const feed = document.getElementById('battleFeed');
@@ -1049,7 +1113,8 @@
         ${battleSideHtml(b, b.challenger.id, b.challenger.name, true)}
         <div class="battle-vs">VS</div>
         ${battleSideHtml(b, b.challenged.id, b.challenged.name, true)}
-      </div>`;
+      </div>
+      ${debateSectionHtml(b)}`;
 
     // Insert below the header, above older cards
     const header = feed.querySelector('.battle-section-header');
@@ -1083,6 +1148,30 @@
         ${battleSideHtml(b, b.challenger.id, b.challenger.name, true)}
         <div class="battle-vs">VS</div>
         ${battleSideHtml(b, b.challenged.id, b.challenged.name, true)}`;
+    }
+
+    // Update debate section — sync vote log
+    const debateEl = document.getElementById(`bdebate-${b.id}`);
+    if (debateEl) {
+      const total = Object.values(b.votes||{}).reduce((s,n)=>s+n,0);
+      const hdr = debateEl.querySelector('.debate-header');
+      if (hdr) hdr.textContent = `Debate · ${total} vote${total!==1?'s':''}`;
+
+      const logEl = document.getElementById(`dlog-${b.id}`);
+      if (logEl && b.voteLog) {
+        const rendered = logEl.querySelectorAll('.debate-entry').length;
+        const newVotes = b.voteLog.slice(rendered);
+        if (newVotes.length) {
+          // Remove "no votes yet" placeholder
+          logEl.querySelector('.debate-empty')?.remove();
+          newVotes.forEach(v => {
+            logEl.insertAdjacentHTML('beforeend', debateEntryHtml(v, b));
+          });
+        }
+      }
+    } else {
+      // Debate section missing (old card) — append it
+      card.insertAdjacentHTML('beforeend', debateSectionHtml(b));
     }
   }
 
@@ -1186,6 +1275,10 @@
   function openTheater(b) {
     _theaterBattleId = b.id;
     document.getElementById('theaterTitle').textContent = `⚔️ ${b.challenger.name} vs ${b.challenged.name}`;
+    // Reset debate log
+    const theaterDebate = document.getElementById('theaterDebate');
+    if (theaterDebate) theaterDebate.innerHTML = '<div class="debate-empty">Votes will appear here as agents deliberate…</div>';
+    document.getElementById('theaterDebateHeader').textContent = '💬 Debate · 0 votes';
     document.getElementById('theaterOverlay').classList.add('open');
     updateTheater(b);
     startTheaterCountdown(60);
@@ -1195,6 +1288,22 @@
     if (_theaterBattleId !== b.id) return;
     document.getElementById('theaterLeft').innerHTML  = theaterSideHtml(b, b.challenger.id, b.challenger.name);
     document.getElementById('theaterRight').innerHTML = theaterSideHtml(b, b.challenged.id, b.challenged.name);
+
+    // Update theater debate log
+    const theaterDebate = document.getElementById('theaterDebate');
+    if (theaterDebate && b.voteLog) {
+      const rendered = theaterDebate.querySelectorAll('.debate-entry').length;
+      const newVotes = b.voteLog.slice(rendered);
+      if (newVotes.length) {
+        theaterDebate.querySelector('.debate-empty')?.remove();
+        newVotes.forEach(v => {
+          theaterDebate.insertAdjacentHTML('beforeend', debateEntryHtml(v, b));
+        });
+      }
+      const total = Object.values(b.votes||{}).reduce((s,n)=>s+n,0);
+      const hdr = document.getElementById('theaterDebateHeader');
+      if (hdr) hdr.textContent = `💬 Debate · ${total} vote${total!==1?'s':''}`;
+    }
   }
 
   function startTheaterCountdown(secs) {

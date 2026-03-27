@@ -556,13 +556,34 @@ function createBattle(challengerAgent, challengedAgent, triggerSubId, triggerSco
 }
 
 function publicBattle(b) {
+  // votes: tally map { agentId → count } for button display
+  // voteLog: ordered array of { voterName, voteFor, votedForName, reasoning, timestamp }
+  const tally = {};
+  const voteLog = [];
+  for (const [voterId, v] of Object.entries(b.votes)) {
+    const vf = (typeof v === 'object') ? v.voteFor : v;
+    tally[vf] = (tally[vf] || 0) + 1;
+    if (typeof v === 'object') {
+      voteLog.push({
+        voterId,
+        voterName:    v.voterName || '',
+        voteFor:      vf,
+        votedForName: vf === b.challengerId ? b.challengerName : b.challengedName,
+        reasoning:    v.reasoning || '',
+        timestamp:    v.timestamp || 0,
+      });
+    }
+  }
+  voteLog.sort((a, b) => a.timestamp - b.timestamp);
+
   return {
     id: b.id, status: b.status,
     challenger: { id: b.challengerId, name: b.challengerName },
     challenged: { id: b.challengedId, name: b.challengedName },
     triggerScore: b.triggerScore,
     submissions: b.submissions,
-    votes: Object.values(b.votes).reduce((acc, v) => { acc[v] = (acc[v]||0)+1; return acc; }, {}),
+    votes: tally,
+    voteLog,
     winner: b.winner, startedAt: b.startedAt,
   };
 }
@@ -572,7 +593,10 @@ function resolveBattle(battleId) {
   if (!battle || battle.status === 'complete') return;
 
   const tally = {};
-  for (const v of Object.values(battle.votes)) tally[v] = (tally[v]||0) + 1;
+  for (const v of Object.values(battle.votes)) {
+    const vf = (typeof v === 'object') ? v.voteFor : v;
+    tally[vf] = (tally[vf] || 0) + 1;
+  }
 
   let winner = battle.challengerId;
   let maxVotes = -1;
@@ -1001,7 +1025,7 @@ Now: ask the user for their name and soul description, then start competing.`;
     const agent  = agents.get(apiKey);
     if (!agent) { json(res, 401, { error: 'Invalid API key' }); return; }
     try {
-      const { battleId, voteFor } = await readJSON(req);
+      const { battleId, voteFor, reasoning } = await readJSON(req);
       const battle = battles.get(battleId);
       if (!battle) { json(res, 404, { error: 'Battle not found' }); return; }
       if (battle.status !== 'voting') { json(res, 400, { error: 'Battle not in voting phase' }); return; }
@@ -1009,16 +1033,22 @@ Now: ask the user for their name and soul description, then start competing.`;
       if (battle.votes[agent.id]) { json(res, 400, { error: 'Already voted' }); return; }
       if (voteFor !== battle.challengerId && voteFor !== battle.challengedId) { json(res, 400, { error: 'Invalid vote target' }); return; }
 
-      battle.votes[agent.id] = voteFor;
       const targetName = voteFor === battle.challengerId ? battle.challengerName : battle.challengedName;
-      console.log(`🗳️   "${agent.name}" votes for "${targetName}"`);
+      battle.votes[agent.id] = {
+        voteFor,
+        voterName: agent.name,
+        reasoning: String(reasoning || '').slice(0, 280),
+        timestamp: Date.now(),
+      };
+      console.log(`🗳️   "${agent.name}" → "${targetName}" — ${(reasoning||'').slice(0,60)}`);
       broadcast({ type: 'BATTLE_VOTE', battle: publicBattle(battle) });
       // MUTATION: call persistState() after this block
       persistState();
       json(res, 200, { ok: true });
 
       const eligibleVoters = Array.from(agents.values()).filter(a => a.id !== battle.challengerId && a.id !== battle.challengedId).length;
-      if (Object.keys(battle.votes).length >= eligibleVoters && eligibleVoters > 0) resolveBattle(battleId);
+      const votesCast = Object.keys(battle.votes).length;
+      if (votesCast >= eligibleVoters && eligibleVoters > 0) resolveBattle(battleId);
     } catch(e) { json(res, e.statusCode || 400, { error: e.message }); }
     return;
   }
