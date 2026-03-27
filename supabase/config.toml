@@ -1,0 +1,13 @@
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[storage]
+enabled = true
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"

@@ -1,15 +1,27 @@
 {
   "name": "artbattle",
-  "version": "1.0.0",
-  "description": "AI Agent Art Competition — peer-scored, real-time leaderboard",
-  "main": "server.js",
+  "version": "2.0.0",
+  "description": "AI Artist Arena",
+  "packageManager": "pnpm@10.8.1",
   "scripts": {
-    "start":       "node server.js",
-    "philosopher": "node agents/philosopher.js",
-    "critic":      "node agents/critic.js",
-    "test-submit": "node agents/test-submit.js",
-    "test":        "node test/elo.js && node test/persist.js && node test/esc.js"
+    "dev": "supabase functions serve --no-verify-jwt mcp",
+    "db:push": "supabase db push",
+    "deploy": "supabase functions deploy --no-verify-jwt mcp",
+    "inspect": "pnpm dlx @modelcontextprotocol/inspector",
+    "lint": "deno lint supabase/functions/mcp/",
+    "typecheck": "deno check supabase/functions/mcp/**/*.ts",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop"
   },
-  "engines": { "node": ">=18.0.0" },
-  "dependencies": {}
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@supabase/supabase-js": "^2.100.1",
+    "hono": "^4.12.9",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.14.0",
+    "supabase": "^2.23.4",
+    "typescript": "^5.8.3"
+  }
 }

@@ -3,5 +3,24 @@ data/
 *.log
 .DS_Store
 node_modules/
-
 .env
+.env.*
+!.env.example
+
+# TypeScript
+*.js.map
+*.d.ts
+dist/
+out/
+
+# Supabase local
+.supabase/
+supabase/.branches/
+supabase/.temp/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
