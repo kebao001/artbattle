@@ -513,13 +513,42 @@ function createBattle(challengerAgent, challengedAgent, triggerSubId, triggerSco
     winner: null,
     startedAt: Date.now(),
   };
+
+  // Pre-populate both sides with existing round art so battle cards always have content.
+  // Agents that implement /api/battle/submit can override with fresh battle art.
+  const triggerSub = submissions.get(triggerSubId);
+  if (triggerSub) {
+    battle.submissions[challengerAgent.id] = {
+      agentName: challengerAgent.name, imageUrl: triggerSub.imageUrl,
+      pitch: triggerSub.pitch, isPrePopulated: true, timestamp: triggerSub.timestamp,
+    };
+  }
+  const roundId = triggerSub?.roundId || currentRound?.id;
+  const challengedSub = Array.from(submissions.values())
+    .filter(s => s.agentId === challengedAgent.id && s.roundId === roundId)
+    .sort((a, b) => b.timestamp - a.timestamp)[0];
+  if (challengedSub) {
+    battle.submissions[challengedAgent.id] = {
+      agentName: challengedAgent.name, imageUrl: challengedSub.imageUrl,
+      pitch: challengedSub.pitch, isPrePopulated: true, timestamp: challengedSub.timestamp,
+    };
+  }
+
+  // Both sides have art → go straight to voting
+  const bothReady = battle.submissions[battle.challengerId] && battle.submissions[battle.challengedId];
+  if (bothReady) battle.status = 'voting';
+
   battles.set(id, battle);
   evictIfNeeded();
 
   console.log(`⚔️   BATTLE: "${challengerAgent.name}" challenges "${challengedAgent.name}" (trigger score: ${triggerScore})`);
-  broadcast({ type: 'BATTLE_START', battle: publicBattle(battle) });
+  if (battle.status === 'voting') {
+    broadcast({ type: 'BATTLE_VOTING', battle: publicBattle(battle) });
+  } else {
+    broadcast({ type: 'BATTLE_START', battle: publicBattle(battle) });
+  }
 
-  setTimeout(() => resolveBattle(id), BATTLE_VOTE_TIMEOUT_MS * 2);
+  setTimeout(() => resolveBattle(id), BATTLE_VOTE_TIMEOUT_MS);
   // MUTATION: call persistState() after this block
   persistState();
 
@@ -939,7 +968,10 @@ Now: ask the user for their name and soul description, then start competing.`;
       const battle = battles.get(battleId);
       if (!battle) { json(res, 404, { error: 'Battle not found' }); return; }
       if (agent.id !== battle.challengerId && agent.id !== battle.challengedId) { json(res, 403, { error: 'Not a participant in this battle' }); return; }
-      if (battle.submissions[agent.id]) { json(res, 400, { error: 'Already submitted for this battle' }); return; }
+      // Block re-submission only if agent already submitted real (non-pre-populated) battle art
+      if (battle.submissions[agent.id] && !battle.submissions[agent.id].isPrePopulated) {
+        json(res, 400, { error: 'Already submitted for this battle' }); return;
+      }
 
       const { imageUrl } = await saveUpload(imageBase64, 'battle-');
 
@@ -947,12 +979,12 @@ Now: ask the user for their name and soul description, then start competing.`;
       console.log(`⚔️   "${agent.name}" submitted battle entry`);
 
       const bothSubmitted = battle.submissions[battle.challengerId] && battle.submissions[battle.challengedId];
-      if (bothSubmitted) {
+      if (bothSubmitted && battle.status !== 'voting') {
         battle.status = 'voting';
         broadcast({ type: 'BATTLE_VOTING', battle: publicBattle(battle) });
         setTimeout(() => resolveBattle(battleId), BATTLE_VOTE_TIMEOUT_MS);
       } else {
-        battle.status = 'active';
+        battle.status = battle.status === 'voting' ? 'voting' : 'active';
         broadcast({ type: 'BATTLE_SUBMISSION', battle: publicBattle(battle) });
       }
       // MUTATION: call persistState() after this block

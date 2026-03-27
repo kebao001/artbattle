@@ -241,11 +241,27 @@
 
     /* ─── Battle cards ────────────────────────────────────────────────────── */
     .battle-section { display: flex; flex-direction: column; gap: 10px; }
+    .battle-section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; background: rgba(248,113,113,.06);
+      border: 1px solid rgba(248,113,113,.14); border-radius: 10px;
+    }
     .battle-section-label {
       font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
       color: #f87171; display: flex; align-items: center; gap: 6px;
     }
-    .battle-section-label::before { content: '⚔️'; font-size: 12px; }
+    .battle-count-badge {
+      font-size: 10px; font-weight: 700; color: #5a3030;
+      background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.2);
+      padding: 2px 7px; border-radius: 20px;
+    }
+
+    /* ─── Section divider ─────────────────────────────────────────────────── */
+    .section-divider {
+      display: flex; align-items: center; gap: 10px; padding: 4px 0;
+    }
+    .section-divider-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); white-space: nowrap; }
+    .section-divider-line { flex: 1; height: 1px; background: var(--border); }
 
     .battle-card {
       background: rgba(248,113,113,.04); border: 1px solid rgba(248,113,113,.18);
@@ -253,7 +269,7 @@
       animation: cardIn .45s cubic-bezier(.16,1,.3,1);
     }
     .battle-card.voting { border-color: rgba(251,191,36,.25); background: rgba(251,191,36,.03); }
-    .battle-card.complete { border-color: rgba(255,255,255,.07); opacity: .85; }
+    .battle-card.complete { border-color: rgba(74,222,128,.12); }
 
     .battle-header {
       display: flex; align-items: center; gap: 8px; padding: 10px 14px 9px;
@@ -465,7 +481,17 @@
   <div class="gallery-pane" id="gallery">
     <!-- Battle feed (inserted at top, hidden until battles exist) -->
     <div class="battle-section" id="battleFeed" style="display:none">
-      <div class="battle-section-label">Active Battles</div>
+      <div class="battle-section-header">
+        <div class="battle-section-label">⚔️ Battles</div>
+        <span class="battle-count-badge" id="battleCountBadge">0</span>
+      </div>
+    </div>
+
+    <!-- Submissions section divider (shown once first submission arrives) -->
+    <div class="section-divider" id="submissionsDivider" style="display:none">
+      <div class="section-divider-line"></div>
+      <div class="section-divider-label">🎨 Submissions</div>
+      <div class="section-divider-line"></div>
     </div>
 
     <div class="welcome" id="welcomeState">
@@ -845,8 +871,11 @@
 
   // ─── Sub counts ────────────────────────────────────────────────────────────
   function updateSubCount() {
-    if (Object.keys(state.submissions).length > 0)
+    if (Object.keys(state.submissions).length > 0) {
       document.getElementById('welcomeState')?.remove();
+      const div = document.getElementById('submissionsDivider');
+      if (div) div.style.display = '';
+    }
   }
 
   // ─── Render card ───────────────────────────────────────────────────────────
@@ -903,7 +932,13 @@
           ${!sub.scoringComplete?`<div class="waiting" id="waiting-${esc(sub.id)}"><div class="spinner"></div>Waiting for judges…</div>`:''}
         </div>
       </div>`;
-    gallery.insertBefore(card, gallery.firstChild);
+    // Insert after the submissions divider (or welcome state / at top if no divider yet)
+    const divider = document.getElementById('submissionsDivider');
+    if (divider && divider.nextSibling) {
+      gallery.insertBefore(card, divider.nextSibling);
+    } else {
+      gallery.insertBefore(card, gallery.firstChild);
+    }
   }
 
   function scoreEntryHtml(s) {
@@ -1007,7 +1042,7 @@
       <div class="battle-header">
         <span class="battle-header-icon">⚔️</span>
         <span class="battle-header-title">${esc(b.challenger.name)} vs ${esc(b.challenged.name)}</span>
-        <span class="battle-header-trigger">score: ${esc(b.triggerScore)}/100</span>
+        <span class="battle-header-trigger">trigger: ${esc(b.triggerScore)}/100</span>
         <span class="battle-header-status ${esc(cls)}" id="bstatus-${esc(b.id)}">${esc(txt)}</span>
       </div>
       <div class="battle-arena" id="barena-${esc(b.id)}">
@@ -1016,9 +1051,14 @@
         ${battleSideHtml(b, b.challenged.id, b.challenged.name, true)}
       </div>`;
 
-    // Insert at top of feed, below the label
-    const label = feed.querySelector('.battle-section-label');
-    feed.insertBefore(card, label ? label.nextSibling : feed.firstChild);
+    // Insert below the header, above older cards
+    const header = feed.querySelector('.battle-section-header');
+    feed.insertBefore(card, header ? header.nextSibling : feed.firstChild);
+
+    // Update count badge
+    const battleCards = feed.querySelectorAll('.battle-card').length;
+    const badge = document.getElementById('battleCountBadge');
+    if (badge) badge.textContent = battleCards;
 
     document.getElementById('welcomeState')?.remove();
   }
