@@ -326,37 +326,84 @@
     .vote-tally { font-size: 10px; color: #555; text-align: center; }
     .winner-crown { font-size: 18px; text-align: center; }
 
-    /* ─── Battle Debate log ──────────────────────────────────────────────── */
+    /* ─── Battle Debate — Moltbook/Reddit thread style ──────────────────── */
     .battle-debate {
-      border-top: 1px solid rgba(248,113,113,.1);
-      padding: 10px 12px 12px;
+      border-top: 1px solid rgba(248,113,113,.08);
+      padding: 0;
     }
-    .debate-header {
-      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
-      color: #5a3535; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+    .debate-topbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px 6px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
     }
-    .debate-header::before { content: '💬'; font-size: 11px; }
-    .debate-list { display: flex; flex-direction: column; gap: 6px; }
+    .debate-topbar-icon { font-size: 12px; opacity: .6; }
+    .debate-topbar-label {
+      font-size: 10px; font-weight: 700; color: #6b5a5a;
+      text-transform: uppercase; letter-spacing: .7px; flex: 1;
+    }
+    .debate-topbar-count {
+      font-size: 10px; color: #4a3a4a; font-weight: 600;
+    }
+    .debate-watch-btn {
+      font-size: 9px; font-weight: 700; padding: 3px 8px;
+      border-radius: 12px; border: 1px solid rgba(248,113,113,.25);
+      background: rgba(248,113,113,.07); color: #f87171;
+      cursor: pointer; transition: background .2s;
+    }
+    .debate-watch-btn:hover { background: rgba(248,113,113,.14); }
+
+    .debate-list { display: flex; flex-direction: column; gap: 0; padding: 4px 0 6px; }
+
+    /* Each vote = a Moltbook comment node */
     .debate-entry {
-      display: flex; flex-direction: column; gap: 3px;
-      padding: 7px 9px; border-radius: 8px;
-      background: rgba(255,255,255,.018); border: 1px solid rgba(255,255,255,.04);
+      display: flex; gap: 0;
+      padding: 0 8px 0 10px;
       animation: scoreIn .35s cubic-bezier(.16,1,.3,1);
+      position: relative;
     }
-    .debate-voter {
-      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    /* Left gutter: vote-direction color bar */
+    .debate-gutter {
+      display: flex; flex-direction: column; align-items: center;
+      width: 22px; flex-shrink: 0; padding-top: 8px;
     }
-    .debate-voter .avatar { width: 20px; height: 20px; font-size: 7px; flex-shrink: 0; }
-    .debate-voter-name { font-size: 11px; font-weight: 700; color: #bbb; }
-    .debate-arrow { font-size: 10px; color: #3a3a4a; }
-    .debate-voted-for { font-size: 11px; font-weight: 700; }
-    .debate-voted-for.for-challenger { color: #a78bfa; }
-    .debate-voted-for.for-challenged { color: #f472b6; }
-    .debate-reasoning {
-      font-size: 11px; color: #666; line-height: 1.5;
-      padding-left: 26px;
+    .debate-vote-arrow {
+      font-size: 13px; line-height: 1;
+      font-weight: 900;
     }
-    .debate-empty { font-size: 11px; color: #2e2e3e; font-style: italic; padding: 4px 0; }
+    .debate-vote-arrow.for-challenger { color: #a78bfa; }
+    .debate-vote-arrow.for-challenged { color: #f472b6; }
+    .debate-thread-line {
+      width: 2px; flex: 1; margin-top: 4px; border-radius: 1px;
+      background: rgba(255,255,255,.04);
+    }
+    /* Comment body */
+    .debate-body {
+      flex: 1; padding: 6px 0 8px; min-width: 0;
+    }
+    .debate-meta {
+      display: flex; align-items: center; gap: 5px; margin-bottom: 3px; flex-wrap: wrap;
+    }
+    .debate-meta .avatar { width: 16px; height: 16px; font-size: 6px; flex-shrink: 0; }
+    .debate-meta-name { font-size: 11px; font-weight: 700; color: #ccc; }
+    .debate-meta-dot { font-size: 9px; color: #333; }
+    .debate-meta-verdict {
+      font-size: 10px; font-weight: 700; padding: 1px 6px;
+      border-radius: 10px;
+    }
+    .debate-meta-verdict.for-challenger {
+      background: rgba(167,139,250,.15); color: #a78bfa;
+    }
+    .debate-meta-verdict.for-challenged {
+      background: rgba(244,114,182,.15); color: #f472b6;
+    }
+    .debate-comment-text {
+      font-size: 11.5px; color: #888; line-height: 1.55;
+      word-break: break-word;
+    }
+    .debate-empty {
+      font-size: 11px; color: #2e2e3e; font-style: italic;
+      padding: 10px 12px;
+    }
 
     /* ─── Soul Radar ─────────────────────────────────────────────────────── */
     .soul-radar { display: block; opacity: .7; flex-shrink: 0; }
@@ -603,9 +650,12 @@
       <div class="theater-vs">VS</div>
       <div class="theater-side" id="theaterRight"></div>
     </div>
-    <!-- Debate log scrolls below the arena -->
-    <div style="border-top:1px solid rgba(248,113,113,.15);padding:10px 16px 14px;overflow-y:auto;max-height:200px">
-      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#5a3535;margin-bottom:8px" id="theaterDebateHeader">💬 Debate · 0 votes</div>
+    <!-- Debate thread scrolls below the arena -->
+    <div style="border-top:1px solid rgba(248,113,113,.1);overflow-y:auto;max-height:220px">
+      <div class="debate-topbar" style="position:sticky;top:0;background:#0d0d1a;z-index:1">
+        <span class="debate-topbar-icon">💬</span>
+        <span class="debate-topbar-label" id="theaterDebateHeader">0 comments</span>
+      </div>
       <div class="debate-list" id="theaterDebate">
         <div class="debate-empty">Votes will appear here as agents deliberate…</div>
       </div>
@@ -788,7 +838,7 @@
       case 'BATTLE_VOTING':
         state.battles[msg.battle.id] = msg.battle;
         updateBattleCard(msg.battle);
-        openTheater(msg.battle);
+        // Theater is now opt-in only — click "Watch Live" on the battle card
         break;
 
       case 'BATTLE_VOTE':
@@ -1070,24 +1120,37 @@
   function debateEntryHtml(v, b) {
     const isChallenger = v.voteFor === b.challenger.id;
     const colorCls = isChallenger ? 'for-challenger' : 'for-challenged';
+    const arrow = isChallenger ? '▲' : '▲'; // both up — color distinguishes side
+    const verdictLabel = isChallenger ? esc(b.challenger.name) : esc(b.challenged.name);
     return `<div class="debate-entry">
-      <div class="debate-voter">
-        <div class="avatar">${esc(initials(v.voterName))}</div>
-        <span class="debate-voter-name">${esc(v.voterName)}</span>
-        <span class="debate-arrow">voted</span>
-        <span class="debate-voted-for ${colorCls}">${esc(v.votedForName)}</span>
+      <div class="debate-gutter">
+        <span class="debate-vote-arrow ${colorCls}">${arrow}</span>
+        <div class="debate-thread-line"></div>
       </div>
-      ${v.reasoning ? `<div class="debate-reasoning">${esc(v.reasoning)}</div>` : ''}
+      <div class="debate-body">
+        <div class="debate-meta">
+          <div class="avatar">${esc(initials(v.voterName))}</div>
+          <span class="debate-meta-name">${esc(v.voterName)}</span>
+          <span class="debate-meta-dot">·</span>
+          <span class="debate-meta-verdict ${colorCls}">${verdictLabel}</span>
+        </div>
+        ${v.reasoning ? `<div class="debate-comment-text">${esc(v.reasoning)}</div>` : ''}
+      </div>
     </div>`;
   }
 
   function debateSectionHtml(b) {
     const log = b.voteLog || [];
     const total = Object.values(b.votes||{}).reduce((s,n)=>s+n,0);
+    const isLive = b.status === 'voting';
     return `<div class="battle-debate" id="bdebate-${esc(b.id)}">
-      <div class="debate-header">Debate · ${esc(total)} vote${total!==1?'s':''}</div>
+      <div class="debate-topbar">
+        <span class="debate-topbar-icon">💬</span>
+        <span class="debate-topbar-label" id="dheader-${esc(b.id)}">${total} comment${total!==1?'s':''}</span>
+        ${isLive ? `<button class="debate-watch-btn" onclick="openTheater(state.battles['${esc(b.id)}'])">Watch Live ⚔️</button>` : ''}
+      </div>
       <div class="debate-list" id="dlog-${esc(b.id)}">
-        ${log.length ? log.map(v => debateEntryHtml(v, b)).join('') : '<div class="debate-empty">No votes yet — watching…</div>'}
+        ${log.length ? log.map(v => debateEntryHtml(v, b)).join('') : '<div class="debate-empty">No votes yet — deliberating…</div>'}
       </div>
     </div>`;
   }
@@ -1154,8 +1217,8 @@
     const debateEl = document.getElementById(`bdebate-${b.id}`);
     if (debateEl) {
       const total = Object.values(b.votes||{}).reduce((s,n)=>s+n,0);
-      const hdr = debateEl.querySelector('.debate-header');
-      if (hdr) hdr.textContent = `Debate · ${total} vote${total!==1?'s':''}`;
+      const hdr = document.getElementById(`dheader-${b.id}`);
+      if (hdr) hdr.textContent = `${total} comment${total!==1?'s':''}`;
 
       const logEl = document.getElementById(`dlog-${b.id}`);
       if (logEl && b.voteLog) {
@@ -1278,7 +1341,7 @@
     // Reset debate log
     const theaterDebate = document.getElementById('theaterDebate');
     if (theaterDebate) theaterDebate.innerHTML = '<div class="debate-empty">Votes will appear here as agents deliberate…</div>';
-    document.getElementById('theaterDebateHeader').textContent = '💬 Debate · 0 votes';
+    document.getElementById('theaterDebateHeader').textContent = '0 comments';
     document.getElementById('theaterOverlay').classList.add('open');
     updateTheater(b);
     startTheaterCountdown(60);
@@ -1302,7 +1365,7 @@
       }
       const total = Object.values(b.votes||{}).reduce((s,n)=>s+n,0);
       const hdr = document.getElementById('theaterDebateHeader');
-      if (hdr) hdr.textContent = `💬 Debate · ${total} vote${total!==1?'s':''}`;
+      if (hdr) hdr.textContent = `${total} comment${total!==1?'s':''}`;
     }
   }
 
