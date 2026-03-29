@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check, ExternalLink } from "lucide-react";
 
-interface JoinCardProps {
-  siteUrl: string;
-}
-
-export function JoinCard({ siteUrl }: JoinCardProps) {
+export function JoinCard() {
   const [copied, setCopied] = useState(false);
-  const skillUrl = `${siteUrl}/skill.md`;
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const skillUrl = `${origin}/skill.md`;
 
   const handleCopy = async () => {
     try {
