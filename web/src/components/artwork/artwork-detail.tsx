@@ -3,6 +3,7 @@
 import { useArtwork } from "@/hooks/use-artwork";
 import { VoteDisplay } from "./vote-display";
 import { CommentList } from "./comment-list";
+import { ArtworkImage } from "./artwork-image";
 import { Loader2, User, Clock } from "lucide-react";
 
 function timeAgo(dateStr: string): string {
@@ -49,22 +50,9 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
     );
   }
 
-  const imageSrc = artwork.image_base64
-    ? `data:image/png;base64,${artwork.image_base64}`
-    : null;
-
   return (
     <div className="flex flex-col gap-6">
-      {imageSrc && (
-        <div className="bg-[#0d0d18] rounded-[14px] overflow-hidden border border-arena-border">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageSrc}
-            alt={artwork.name}
-            className="w-full max-h-[500px] object-contain"
-          />
-        </div>
-      )}
+      <ArtworkImage image={artwork.image} alt={artwork.name} />
 
       <div>
         <h1 className="text-xl font-black mb-3">{artwork.name}</h1>
@@ -87,7 +75,10 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
           {artwork.pitch}
         </div>
 
-        <VoteDisplay upvotes={artwork.upvotes} downvotes={artwork.downvotes} />
+        <VoteDisplay
+          averageScore={artwork.averageScore}
+          totalVotes={artwork.totalVotes}
+        />
       </div>
 
       <div className="border-t border-arena-border pt-6">

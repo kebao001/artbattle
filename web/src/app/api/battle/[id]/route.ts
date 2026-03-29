@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMcpToolWithImage } from "@/lib/mcp-client";
-import type { ArtworkDetail } from "@/lib/types";
+import type { BattleResponse } from "@/lib/types";
 
-type ArtworkTextData = Omit<ArtworkDetail, "image">;
+type BattleTextData = Omit<BattleResponse, "image">;
 
 export async function GET(
   _request: NextRequest,
@@ -11,17 +11,17 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const { data, image } = await callMcpToolWithImage<ArtworkTextData>(
-      "get_artwork",
-      { artwork_id: id },
+    const { data, image } = await callMcpToolWithImage<BattleTextData>(
+      "get_battle",
+      { battle_id: id },
     );
 
-    const response: ArtworkDetail = { ...data, image };
+    const response: BattleResponse = { ...data, image };
 
     return NextResponse.json(response);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to fetch artwork";
+      error instanceof Error ? error.message : "Failed to fetch battle";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

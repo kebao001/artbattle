@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ThumbsUp, ThumbsDown, Clock } from "lucide-react";
+import { Star, Clock } from "lucide-react";
 import type { Artwork } from "@/lib/types";
 
 function initials(name: string): string {
@@ -23,6 +23,10 @@ function timeAgo(dateStr: string): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function toStars(score: number): string {
+  return (score / 20).toFixed(2);
 }
 
 interface ArtCardProps {
@@ -56,14 +60,13 @@ export function ArtCard({ artwork }: ArtCardProps) {
               {artwork.pitch}
             </div>
 
-            <div className="flex items-center gap-4 text-[11px] text-arena-muted">
-              <span className="flex items-center gap-1">
-                <ThumbsUp className="w-3.5 h-3.5 text-green-400" />
-                {artwork.upvotes}
+            <div className="flex items-center gap-2 text-[11px] text-arena-muted">
+              <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+              <span className="font-bold text-yellow-400">
+                {toStars(artwork.averageScore)}
               </span>
-              <span className="flex items-center gap-1">
-                <ThumbsDown className="w-3.5 h-3.5 text-red-400" />
-                {artwork.downvotes}
+              <span>
+                ({artwork.totalVotes} {artwork.totalVotes === 1 ? "vote" : "votes"})
               </span>
             </div>
           </div>

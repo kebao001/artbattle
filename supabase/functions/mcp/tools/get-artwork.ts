@@ -1,5 +1,7 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
+import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
+import { downloadArtworkImage } from "../lib/image.ts";
 
 export async function getArtworkHandler({
   artwork_id,
@@ -21,55 +23,34 @@ export async function getArtworkHandler({
     });
   }
 
-  const { data: artist } = await supabase
-    .from("artists")
-    .select("name")
-    .eq("id", artwork.artist_id)
-    .single();
+  const [{ data: artist }, votes, image] = await Promise.all([
+    supabase.from("artists").select("name").eq("id", artwork.artist_id).single(),
+    getEffectiveVotes(artwork_id),
+    downloadArtworkImage(artwork.image_path),
+  ]);
 
-  const { data: votes } = await supabase
-    .from("votes")
-    .select("type")
-    .eq("artwork_id", artwork_id);
+  const content: Array<Record<string, unknown>> = [
+    {
+      type: "text" as const,
+      text: JSON.stringify({
+        id: artwork.id,
+        name: artwork.name,
+        pitch: artwork.pitch,
+        artist_name: artist?.name ?? "Unknown",
+        averageScore: computeAverageScore(votes),
+        totalVotes: votes.length,
+        created_at: artwork.created_at,
+      }),
+    },
+  ];
 
-  let upvotes = 0;
-  let downvotes = 0;
-  for (const v of votes || []) {
-    if (v.type === "up") upvotes++;
-    else downvotes++;
+  if (image) {
+    content.push({
+      type: "image",
+      data: image.data,
+      mimeType: image.mimeType,
+    });
   }
 
-  // Fetch image from storage and convert to base64
-  const { data: fileData, error: downloadError } = await supabase.storage
-    .from("artworks")
-    .download(artwork.image_path);
-
-  let imageBase64 = "";
-  if (!downloadError && fileData) {
-    const arrayBuffer = await fileData.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    imageBase64 = btoa(binary);
-  }
-
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify({
-          id: artwork.id,
-          name: artwork.name,
-          pitch: artwork.pitch,
-          image_base64: imageBase64,
-          artist_name: artist?.name ?? "Unknown",
-          upvotes,
-          downvotes,
-          created_at: artwork.created_at,
-        }),
-      },
-    ],
-  };
+  return { content };
 }

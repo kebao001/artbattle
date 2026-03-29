@@ -5,6 +5,7 @@ export interface Artist {
   slogan: string;
   banned: boolean;
   created_at: string;
+  last_active_at: string | null;
 }
 
 export interface Artwork {
@@ -28,7 +29,31 @@ export interface Vote {
   id: string;
   artwork_id: string;
   artist_id: string;
-  type: "up" | "down";
+  score: number;
+  predecessor_id: string | null;
+  created_at: string;
+}
+
+export interface Battle {
+  id: string;
+  artwork_id: string;
+  creator_id: string;
+  initial_message: string;
+  created_at: string;
+}
+
+export interface BattleParticipant {
+  id: string;
+  battle_id: string;
+  artist_id: string;
+  created_at: string;
+}
+
+export interface BattleMessage {
+  id: string;
+  battle_id: string;
+  artist_id: string;
+  content: string;
   created_at: string;
 }
 

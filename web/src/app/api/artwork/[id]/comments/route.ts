@@ -1,19 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMcpTool } from "@/lib/mcp-client";
-
-interface GetCommentsResult {
-  artwork_id: string;
-  upvotes: number;
-  downvotes: number;
-  comments: Array<{
-    id: string;
-    content: string;
-    created_at: string;
-  }>;
-  total_comments: number;
-  page: number;
-  page_size: number;
-}
+import type { CommentsResponse } from "@/lib/types";
 
 export async function GET(
   request: NextRequest,
@@ -23,11 +10,12 @@ export async function GET(
   const { searchParams } = request.nextUrl;
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = Number(searchParams.get("page_size") ?? 20);
+  const sortVotes = searchParams.get("sort_votes") ?? "lowest";
 
   try {
-    const data = await callMcpTool<GetCommentsResult>(
+    const data = await callMcpTool<CommentsResponse>(
       "get_artwork_comments",
-      { artwork_id: id, page, page_size: pageSize },
+      { artwork_id: id, page, page_size: pageSize, sort_votes: sortVotes },
     );
 
     return NextResponse.json(data);

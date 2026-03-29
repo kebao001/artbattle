@@ -1,0 +1,14 @@
+{
+  "name": "artbattle-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "resetDb": "node --env-file=.env.local reset-db.js",
+    "seed": "node --env-file=.env.local index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@supabase/supabase-js": "^2.100.1"
+  }
+}
