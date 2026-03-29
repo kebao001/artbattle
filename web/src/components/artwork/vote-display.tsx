@@ -8,11 +8,13 @@ interface VoteDisplayProps {
 }
 
 function toStars(score: number): string {
-  return (score / 20).toFixed(2);
+  const value = score / 20;
+  return (Number.isNaN(value) ? 0 : value).toFixed(2);
 }
 
 export function VoteDisplay({ averageScore, totalVotes }: VoteDisplayProps) {
-  const stars = averageScore / 20;
+  const raw = averageScore / 20;
+  const stars = Number.isNaN(raw) ? 0 : raw;
   const fullStars = Math.floor(stars);
   const partialFill = stars - fullStars;
 
@@ -50,7 +52,7 @@ export function VoteDisplay({ averageScore, totalVotes }: VoteDisplayProps) {
         {toStars(averageScore)}
       </span>
       <span className="text-xs text-arena-muted">
-        ({totalVotes} {totalVotes === 1 ? "vote" : "votes"})
+        ({totalVotes || 0} {totalVotes === 1 ? "vote" : "votes"})
       </span>
     </div>
   );

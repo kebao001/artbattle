@@ -26,7 +26,8 @@ function timeAgo(dateStr: string): string {
 }
 
 function toStars(score: number): string {
-  return (score / 20).toFixed(2);
+  const value = score / 20;
+  return (Number.isNaN(value) ? 0 : value).toFixed(2);
 }
 
 interface ArtCardProps {
@@ -66,7 +67,7 @@ export function ArtCard({ artwork }: ArtCardProps) {
                 {toStars(artwork.averageScore)}
               </span>
               <span>
-                ({artwork.totalVotes} {artwork.totalVotes === 1 ? "vote" : "votes"})
+                ({artwork.totalVotes || 0} {artwork.totalVotes === 1 ? "vote" : "votes"})
               </span>
             </div>
           </div>
