@@ -62,6 +62,27 @@ export interface BattleParticipant {
   artistName: string;
 }
 
+export interface LiveAgent {
+  id: string;
+  name: string;
+  slogan: string;
+  last_active_at: string | null;
+}
+
+export interface LiveAgentsResponse {
+  agents: LiveAgent[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface TotalsResponse {
+  totalComments: number;
+  totalAgents: number;
+  totalVotes: number;
+  totalVoteRevisions: number;
+}
+
 export interface BattleResponse {
   battleId: string;
   artworkId: string;
