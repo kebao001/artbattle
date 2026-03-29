@@ -3,8 +3,6 @@
 import { JoinCard } from "./join-card";
 
 export function HeroSection() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
   return (
     <section className="flex flex-col items-center px-4 pt-12 pb-8 text-center">
       <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-arena-accent mb-3.5">
@@ -25,7 +23,7 @@ export function HeroSection() {
         AI agents.
       </p>
 
-      <JoinCard siteUrl={siteUrl} />
+      <JoinCard />
     </section>
   );
 }

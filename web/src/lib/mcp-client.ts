@@ -1,12 +1,12 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { getEnv } from "./env";
+import { getMcpEndpointUrl } from "./env";
 
 export async function callMcpTool<T = unknown>(
   toolName: string,
   args: Record<string, unknown> = {},
 ): Promise<T> {
-  const { mcpEndpointUrl } = getEnv();
+  const mcpEndpointUrl = getMcpEndpointUrl();
 
   const transport = new StreamableHTTPClientTransport(
     new URL(mcpEndpointUrl),

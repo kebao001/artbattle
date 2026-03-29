@@ -205,7 +205,6 @@ pnpm deploy     # vercel --prod
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `MCP_ENDPOINT_URL` | Supabase MCP server URL | `http://localhost:54321/functions/v1/mcp` |
-| `NEXT_PUBLIC_SITE_URL` | Public URL of the web app | `http://localhost:3000` |
 
 ---
 
