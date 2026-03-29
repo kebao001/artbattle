@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callMcpTool } from "@/lib/mcp-client";
+import { callMcpToolWithImage } from "@/lib/mcp-client";
+import type { ArtworkDetail } from "@/lib/types";
 
-interface GetArtworkResult {
-  id: string;
-  name: string;
-  pitch: string;
-  image_base64: string;
-  artist_name: string;
-  upvotes: number;
-  downvotes: number;
-  created_at: string;
-}
+type ArtworkTextData = Omit<ArtworkDetail, "image">;
 
 export async function GET(
   _request: NextRequest,
@@ -19,11 +11,14 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const data = await callMcpTool<GetArtworkResult>("get_artwork", {
-      artwork_id: id,
-    });
+    const { data, image } = await callMcpToolWithImage<ArtworkTextData>(
+      "get_artwork",
+      { artwork_id: id },
+    );
 
-    return NextResponse.json(data);
+    const response: ArtworkDetail = { ...data, image };
+
+    return NextResponse.json(response);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch artwork";

@@ -1,5 +1,6 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
+import { downloadArtworkImage } from "../lib/image.ts";
 
 export async function getBattleHandler({
   battle_id,
@@ -21,25 +22,17 @@ export async function getBattleHandler({
     });
   }
 
-  // Fetch artwork info
-  const { data: artwork } = await supabase
-    .from("artworks")
-    .select("name")
-    .eq("id", battle.artwork_id)
-    .single();
-
-  // Fetch creator name
-  const { data: creator } = await supabase
-    .from("artists")
-    .select("name")
-    .eq("id", battle.creator_id)
-    .single();
-
-  // Fetch participants
-  const { data: participants } = await supabase
-    .from("battle_participants")
-    .select("artist_id")
-    .eq("battle_id", battle_id);
+  const [{ data: artwork }, { data: creator }, { data: participants }, { data: messages }] =
+    await Promise.all([
+      supabase.from("artworks").select("name, image_path").eq("id", battle.artwork_id).single(),
+      supabase.from("artists").select("name").eq("id", battle.creator_id).single(),
+      supabase.from("battle_participants").select("artist_id").eq("battle_id", battle_id),
+      supabase
+        .from("battle_messages")
+        .select("artist_id, content, created_at")
+        .eq("battle_id", battle_id)
+        .order("created_at", { ascending: true }),
+    ]);
 
   const participantIds = (participants || []).map((p) => p.artist_id);
   let participantList: { artistId: string; artistName: string }[] = [];
@@ -56,14 +49,6 @@ export async function getBattleHandler({
     }));
   }
 
-  // Fetch all messages in chronological order
-  const { data: messages } = await supabase
-    .from("battle_messages")
-    .select("artist_id, content, created_at")
-    .eq("battle_id", battle_id)
-    .order("created_at", { ascending: true });
-
-  // Gather all unique artist IDs from messages
   const messageArtistIds = [
     ...new Set((messages || []).map((m) => m.artist_id)),
   ];
@@ -86,21 +71,33 @@ export async function getBattleHandler({
     })
     .join("\n\n");
 
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify({
-          battleId: battle.id,
-          artworkId: battle.artwork_id,
-          artworkName: artwork?.name ?? "Unknown",
-          creatorId: battle.creator_id,
-          creatorName: creator?.name ?? "Unknown",
-          participants: participantList,
-          messages: concatenatedMessages,
-          created_at: battle.created_at,
-        }),
-      },
-    ],
-  };
+  const image = artwork?.image_path
+    ? await downloadArtworkImage(artwork.image_path)
+    : null;
+
+  const content: Array<Record<string, unknown>> = [
+    {
+      type: "text" as const,
+      text: JSON.stringify({
+        battleId: battle.id,
+        artworkId: battle.artwork_id,
+        artworkName: artwork?.name ?? "Unknown",
+        creatorId: battle.creator_id,
+        creatorName: creator?.name ?? "Unknown",
+        participants: participantList,
+        messages: concatenatedMessages,
+        created_at: battle.created_at,
+      }),
+    },
+  ];
+
+  if (image) {
+    content.push({
+      type: "image",
+      data: image.data,
+      mimeType: image.mimeType,
+    });
+  }
+
+  return { content };
 }

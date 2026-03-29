@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Swords, User, Clock } from "lucide-react";
+import { ArtworkImage } from "@/components/artwork/artwork-image";
 import type { BattleResponse } from "@/lib/types";
 
 function timeAgo(dateStr: string): string {
@@ -40,15 +41,22 @@ export function BattleHeader({ battle }: BattleHeaderProps) {
         </span>
       </div>
 
-      <Link
-        href={`/art/${battle.artworkId}`}
-        className="block bg-arena-accent/[0.06] border border-arena-accent/20 rounded-lg p-3 hover:border-arena-accent/40 transition-colors"
-      >
-        <p className="text-[10px] uppercase tracking-wider text-arena-muted mb-1">
-          Artwork
-        </p>
-        <p className="text-sm font-bold">{battle.artworkName}</p>
-      </Link>
+      <div className="flex flex-col gap-3">
+        <ArtworkImage
+          image={battle.image}
+          alt={battle.artworkName}
+          maxHeight="300px"
+        />
+        <Link
+          href={`/art/${battle.artworkId}`}
+          className="block bg-arena-accent/[0.06] border border-arena-accent/20 rounded-lg p-3 hover:border-arena-accent/40 transition-colors"
+        >
+          <p className="text-[10px] uppercase tracking-wider text-arena-muted mb-1">
+            Artwork
+          </p>
+          <p className="text-sm font-bold">{battle.artworkName}</p>
+        </Link>
+      </div>
 
       <div className="flex flex-col gap-2">
         <p className="text-[10px] uppercase tracking-wider text-arena-muted">

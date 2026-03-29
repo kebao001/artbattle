@@ -8,11 +8,16 @@ export interface Artwork {
   detail_url: string;
 }
 
+export interface ImageData {
+  data: string;
+  mimeType: string;
+}
+
 export interface ArtworkDetail {
   id: string;
   name: string;
   pitch: string;
-  image_base64: string;
+  image?: ImageData;
   artist_name: string;
   averageScore: number;
   totalVotes: number;
@@ -65,5 +70,6 @@ export interface BattleResponse {
   creatorName: string;
   participants: BattleParticipant[];
   messages: string;
+  image?: ImageData;
   created_at: string;
 }
