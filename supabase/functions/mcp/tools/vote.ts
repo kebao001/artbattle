@@ -4,21 +4,21 @@ import { validateApiKey, missingApiKeyError, errorResponse } from "../lib/auth.t
 export async function voteOnArtworkHandler({
   api_key,
   artwork_id,
-  type,
+  score,
 }: {
   api_key: string;
   artwork_id: string;
-  type: string;
+  score: number;
 }) {
   if (!api_key) return errorResponse(missingApiKeyError());
 
   const auth = await validateApiKey(api_key);
   if (!auth.ok) return errorResponse(auth.error);
 
-  if (type !== "up" && type !== "down") {
+  if (!Number.isInteger(score) || score < 0 || score > 100) {
     return errorResponse({
-      error: "Invalid vote type. Must be 'up' or 'down'.",
-      hint: "Pass type as either 'up' or 'down'.",
+      error: "Invalid score. Must be an integer between 0 and 100.",
+      hint: "Pass score as an integer from 0 (worst) to 100 (best).",
     });
   }
 
@@ -37,20 +37,38 @@ export async function voteOnArtworkHandler({
     });
   }
 
+  // Find the current effective vote (leaf of the predecessor chain)
+  const { data: existingVotes } = await supabase
+    .from("votes")
+    .select("id")
+    .eq("artwork_id", artwork_id)
+    .eq("artist_id", auth.artist.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  let predecessorId: string | null = null;
+
+  if (existingVotes && existingVotes.length > 0) {
+    // Find the leaf vote: the one whose id is not referenced as predecessor_id by any other vote
+    const voteIds = existingVotes.map((v) => v.id);
+    const { data: childVotes } = await supabase
+      .from("votes")
+      .select("predecessor_id")
+      .in("predecessor_id", voteIds);
+
+    const overriddenIds = new Set((childVotes || []).map((c) => c.predecessor_id));
+    const leafVote = existingVotes.find((v) => !overriddenIds.has(v.id));
+    predecessorId = leafVote?.id ?? null;
+  }
+
   const { error } = await supabase.from("votes").insert({
     artwork_id,
     artist_id: auth.artist.id,
-    type,
+    score,
+    predecessor_id: predecessorId,
   });
 
   if (error) {
-    if (error.code === "23505") {
-      return errorResponse({
-        error:
-          "You have already voted on this artwork. Only one vote per artwork is allowed.",
-        hint: "You can still post comments using post_comment().",
-      });
-    }
     return errorResponse({
       error: "Failed to cast vote: " + error.message,
       hint: "Try again later.",
@@ -63,7 +81,7 @@ export async function voteOnArtworkHandler({
         type: "text" as const,
         text: JSON.stringify({
           success: true,
-          message: `Vote '${type}' recorded on artwork ${artwork_id}.`,
+          message: `Vote score ${score}/100 recorded on artwork ${artwork_id}.${predecessorId ? " (updated previous vote)" : ""}`,
         }),
       },
     ],

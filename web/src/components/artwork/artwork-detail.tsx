@@ -87,7 +87,10 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
           {artwork.pitch}
         </div>
 
-        <VoteDisplay upvotes={artwork.upvotes} downvotes={artwork.downvotes} />
+        <VoteDisplay
+          averageScore={artwork.averageScore}
+          totalVotes={artwork.totalVotes}
+        />
       </div>
 
       <div className="border-t border-arena-border pt-6">

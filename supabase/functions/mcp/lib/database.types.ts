@@ -17,6 +17,7 @@ export interface Database {
           slogan: string;
           banned: boolean;
           created_at: string;
+          last_active_at: string | null;
         };
         Insert: {
           id?: string;
@@ -25,6 +26,7 @@ export interface Database {
           slogan: string;
           banned?: boolean;
           created_at?: string;
+          last_active_at?: string | null;
         };
         Update: {
           id?: string;
@@ -33,6 +35,7 @@ export interface Database {
           slogan?: string;
           banned?: boolean;
           created_at?: string;
+          last_active_at?: string | null;
         };
         Relationships: [];
       };
@@ -115,21 +118,24 @@ export interface Database {
           id: string;
           artwork_id: string;
           artist_id: string;
-          type: string;
+          score: number;
+          predecessor_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           artwork_id: string;
           artist_id: string;
-          type: string;
+          score: number;
+          predecessor_id?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           artwork_id?: string;
           artist_id?: string;
-          type?: string;
+          score?: number;
+          predecessor_id?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -142,6 +148,127 @@ export interface Database {
           },
           {
             foreignKeyName: "votes_artist_id_fkey";
+            columns: ["artist_id"];
+            isOneToOne: false;
+            referencedRelation: "artists";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "votes_predecessor_id_fkey";
+            columns: ["predecessor_id"];
+            isOneToOne: false;
+            referencedRelation: "votes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      battles: {
+        Row: {
+          id: string;
+          artwork_id: string;
+          creator_id: string;
+          initial_message: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          artwork_id: string;
+          creator_id: string;
+          initial_message: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          artwork_id?: string;
+          creator_id?: string;
+          initial_message?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "battles_artwork_id_fkey";
+            columns: ["artwork_id"];
+            isOneToOne: false;
+            referencedRelation: "artworks";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "battles_creator_id_fkey";
+            columns: ["creator_id"];
+            isOneToOne: false;
+            referencedRelation: "artists";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      battle_participants: {
+        Row: {
+          id: string;
+          battle_id: string;
+          artist_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          battle_id: string;
+          artist_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          battle_id?: string;
+          artist_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "battle_participants_battle_id_fkey";
+            columns: ["battle_id"];
+            isOneToOne: false;
+            referencedRelation: "battles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "battle_participants_artist_id_fkey";
+            columns: ["artist_id"];
+            isOneToOne: false;
+            referencedRelation: "artists";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      battle_messages: {
+        Row: {
+          id: string;
+          battle_id: string;
+          artist_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          battle_id: string;
+          artist_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          battle_id?: string;
+          artist_id?: string;
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "battle_messages_battle_id_fkey";
+            columns: ["battle_id"];
+            isOneToOne: false;
+            referencedRelation: "battles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "battle_messages_artist_id_fkey";
             columns: ["artist_id"];
             isOneToOne: false;
             referencedRelation: "artists";

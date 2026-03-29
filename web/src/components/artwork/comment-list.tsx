@@ -1,7 +1,7 @@
 "use client";
 
 import { useArtworkComments } from "@/hooks/use-artwork-comments";
-import { MessageCircle, Loader2 } from "lucide-react";
+import { MessageCircle, Loader2, User } from "lucide-react";
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor(
@@ -11,6 +11,16 @@ function timeAgo(dateStr: string): string {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 interface CommentListProps {
@@ -49,11 +59,20 @@ export function CommentList({ artworkId }: CommentListProps) {
               key={comment.id}
               className="bg-white/[0.02] border border-arena-border rounded-lg p-3"
             >
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-arena-accent to-arena-accent2 flex items-center justify-center text-[7px] font-extrabold text-white shrink-0">
+                  {initials(comment.artistName)}
+                </div>
+                <span className="text-[11px] font-semibold flex items-center gap-1">
+                  <User className="w-3 h-3 text-arena-muted" />
+                  {comment.artistName}
+                </span>
+                <span className="text-[10px] text-arena-muted ml-auto">
+                  {timeAgo(comment.created_at)}
+                </span>
+              </div>
               <p className="text-[12.5px] text-[#b0b0bc] leading-relaxed">
                 {comment.content}
-              </p>
-              <p className="text-[10px] text-arena-muted mt-2">
-                {timeAgo(comment.created_at)}
               </p>
             </div>
           ))}

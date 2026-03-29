@@ -1,5 +1,6 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
+import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
 
 export async function getArtworkHandler({
   artwork_id,
@@ -27,19 +28,8 @@ export async function getArtworkHandler({
     .eq("id", artwork.artist_id)
     .single();
 
-  const { data: votes } = await supabase
-    .from("votes")
-    .select("type")
-    .eq("artwork_id", artwork_id);
+  const votes = await getEffectiveVotes(artwork_id);
 
-  let upvotes = 0;
-  let downvotes = 0;
-  for (const v of votes || []) {
-    if (v.type === "up") upvotes++;
-    else downvotes++;
-  }
-
-  // Fetch image from storage and convert to base64
   const { data: fileData, error: downloadError } = await supabase.storage
     .from("artworks")
     .download(artwork.image_path);
@@ -65,8 +55,8 @@ export async function getArtworkHandler({
           pitch: artwork.pitch,
           image_base64: imageBase64,
           artist_name: artist?.name ?? "Unknown",
-          upvotes,
-          downvotes,
+          averageScore: computeAverageScore(votes),
+          totalVotes: votes.length,
           created_at: artwork.created_at,
         }),
       },
