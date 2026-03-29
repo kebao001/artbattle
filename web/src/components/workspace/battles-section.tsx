@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtworks } from "@/hooks/use-artworks";
 import { useArtwork } from "@/hooks/use-artwork";
-import type { Artwork } from "@/lib/types";
+import type { Artwork, ArtworkDetail } from "@/lib/types";
 
 type SortCol = "artworks" | "votes" | "date";
 type SortDir = "asc" | "desc";
@@ -85,44 +85,44 @@ function SortHeader({ col, label, sortCol, sortDir, onSort }: {
   );
 }
 
+// ── Art panel (extracted to avoid component-in-render) ───────────────────────
+function ArtPanel({ detail, loading, art }: { detail: ArtworkDetail | undefined; loading: boolean; art: Artwork }) {
+  return (
+    <div className="flex-1 min-w-0 flex flex-col gap-4">
+      <div className="bg-white/5 flex items-center justify-center" style={{ minHeight: 160, aspectRatio: "16/9" }}>
+        {loading ? (
+          <div className="w-full h-full bg-white/5 animate-pulse" />
+        ) : detail?.image ? (
+          <img src={`data:${detail.image.mimeType};base64,${detail.image.data}`} alt={art.name} className="max-h-[320px] max-w-full object-contain" />
+        ) : (
+          <span className="font-black text-white/15 text-4xl">{initials(art.name)}</span>
+        )}
+      </div>
+      <div>
+        <p className="text-[15px] font-black text-[#f3efef] truncate">{art.name}</p>
+        {detail?.artist_name && (
+          <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mt-0.5">{detail.artist_name}</p>
+        )}
+        <div className="flex gap-4 mt-2 text-[13px] font-bold text-[#f3efef]">
+          <span>★ {art.averageScore.toFixed(1)}</span>
+          <span className="text-white/30">{art.totalVotes} votes</span>
+        </div>
+        <Link
+          href={`/art/${art.id}`}
+          className="inline-block text-[11px] font-bold uppercase tracking-[0.12em] text-white/35 hover:text-white transition-colors mt-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          View →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // ── Expanded battle detail ────────────────────────────────────────────────────
 function ExpandedBattle({ artA, artB }: { artA: Artwork; artB: Artwork }) {
   const { data: detailA, isLoading: loadA } = useArtwork(artA.id);
   const { data: detailB, isLoading: loadB } = useArtwork(artB.id);
-
-  function ArtPanel({ detail, loading, art }: { detail: typeof detailA; loading: boolean; art: Artwork }) {
-    return (
-      <div className="flex-1 min-w-0 flex flex-col gap-4">
-        <div className="bg-white/5 flex items-center justify-center" style={{ minHeight: 160, aspectRatio: "16/9" }}>
-          {loading ? (
-            <div className="w-full h-full bg-white/5 animate-pulse" />
-          ) : detail?.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={`data:${detail.image.mimeType};base64,${detail.image.data}`} alt={art.name} className="max-h-[320px] max-w-full object-contain" />
-          ) : (
-            <span className="font-black text-white/15 text-4xl">{initials(art.name)}</span>
-          )}
-        </div>
-        <div>
-          <p className="text-[15px] font-black text-[#f3efef] truncate">{art.name}</p>
-          {detail?.artist_name && (
-            <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mt-0.5">{detail.artist_name}</p>
-          )}
-          <div className="flex gap-4 mt-2 text-[13px] font-bold text-[#f3efef]">
-            <span>★ {art.averageScore.toFixed(1)}</span>
-            <span className="text-white/30">{art.totalVotes} votes</span>
-          </div>
-          <Link
-            href={`/art/${art.id}`}
-            className="inline-block text-[11px] font-bold uppercase tracking-[0.12em] text-white/35 hover:text-white transition-colors mt-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            View →
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-black p-6 sm:p-8 flex flex-col sm:flex-row gap-6 sm:gap-10">

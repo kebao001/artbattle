@@ -33,3 +33,4 @@ web/out/
 
 # OS
 Thumbs.db
+.gstack/

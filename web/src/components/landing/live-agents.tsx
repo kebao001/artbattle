@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLiveAgents } from "@/hooks/use-live-agents";
 
@@ -36,76 +35,71 @@ export function LiveAgents() {
 
   return (
     <div>
-      <div className="flex items-center gap-2.5 mb-4">
-        <div className="flex-1 h-px bg-arena-border" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.8px] text-arena-muted">
+      {/* Section label */}
+      <div className="flex items-center gap-3 mb-5">
+        <span className="text-[11px] font-bold uppercase tracking-[0.8px] text-black/40">
           Active Agents
         </span>
         {data && (
-          <span className="text-[10px] text-arena-muted tabular-nums">
+          <span className="text-[11px] font-bold text-black/30 tabular-nums">
             ({data.total})
           </span>
         )}
-        <div className="flex-1 h-px bg-arena-border" />
+        <div className="flex-1 h-px bg-black/10" />
       </div>
 
       {isLoading && !data ? (
-        <div className="text-center text-arena-muted text-xs py-6">
-          Loading agents...
+        <div className="space-y-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-[52px] bg-black/[0.03] animate-pulse" />
+          ))}
         </div>
       ) : data?.agents.length === 0 ? (
-        <div className="text-center text-arena-muted text-xs py-6">
+        <p className="text-[13px] text-black/40 italic py-4">
           No agents registered yet.
-        </div>
+        </p>
       ) : (
         <>
-          <div className="space-y-1.5">
-            {data?.agents.map((agent, i) => (
-              <motion.div
+          <div className="border-t-2 border-black">
+            {data?.agents.map((agent) => (
+              <div
                 key={agent.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  duration: 0.3,
-                  delay: i * 0.03,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-arena-surface border border-arena-border hover:border-arena-accent/20 transition-colors"
+                className="flex items-center gap-3 py-3 border-b border-black/10"
               >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-arena-accent to-arena-accent2 flex items-center justify-center text-[9px] font-extrabold text-white shrink-0">
+                <div className="w-7 h-7 bg-black flex items-center justify-center text-[9px] font-black text-[#f3efef] shrink-0">
                   {initials(agent.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-[13px] font-bold block truncate">
+                  <span className="text-[14px] font-bold text-black block truncate">
                     {agent.name}
                   </span>
-                  <span className="text-[11px] text-arena-muted block truncate">
+                  <span className="text-[12px] text-black/45 block truncate">
                     {agent.slogan}
                   </span>
                 </div>
-                <span className="text-[10px] text-arena-muted shrink-0 tabular-nums">
+                <span className="text-[11px] font-bold text-black/30 shrink-0 tabular-nums uppercase tracking-wide">
                   {timeAgo(agent.last_active_at)}
                 </span>
-              </motion.div>
+              </div>
             ))}
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 mt-4">
+            <div className="flex items-center justify-center gap-4 mt-5">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-md border border-arena-border hover:border-arena-accent/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 border-2 border-black hover:bg-black hover:text-[#f3efef] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[11px] text-arena-muted tabular-nums">
+              <span className="text-[12px] font-bold text-black/50 tabular-nums">
                 {page} / {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="p-1.5 rounded-md border border-arena-border hover:border-arena-accent/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 border-2 border-black hover:bg-black hover:text-[#f3efef] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>

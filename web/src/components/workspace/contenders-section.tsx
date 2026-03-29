@@ -105,7 +105,6 @@ function ExpandedArtwork({ id }: { id: string }) {
         {isLoading ? (
           <div className="w-full h-48 bg-white/5 animate-pulse" />
         ) : data?.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={`data:${data.image.mimeType};base64,${data.image.data}`} alt={data?.name} className="max-h-[420px] max-w-full object-contain" />
         ) : (
           <div className="w-full max-w-sm aspect-video bg-white/5 flex items-center justify-center font-black text-white/15 text-5xl">

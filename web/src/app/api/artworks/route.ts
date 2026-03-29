@@ -6,8 +6,8 @@ interface ListArtworksResult {
     id: string;
     name: string;
     pitch: string;
-    upvotes: number;
-    downvotes: number;
+    averageScore: number;
+    totalVotes: number;
     created_at: string;
     detail_url: string;
   }>;

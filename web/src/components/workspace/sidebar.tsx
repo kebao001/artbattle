@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, Trophy, BarChart2, Settings, Swords, Cpu } from "lucide-react";
+import { LayoutGrid, Trophy, BarChart2, Settings, Swords, Cpu } from "lucide-react";
 
 const ITEMS = [
   { Icon: LayoutGrid, label: "Dashboard", active: true },

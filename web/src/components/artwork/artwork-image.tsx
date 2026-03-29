@@ -16,10 +16,10 @@ export function ArtworkImage({
 }: ArtworkImageProps) {
   if (!image) {
     return (
-      <div className="bg-[#0d0d18] rounded-[14px] overflow-hidden border border-arena-border flex items-center justify-center py-16">
-        <div className="flex flex-col items-center gap-2 text-arena-muted">
+      <div className="bg-black overflow-hidden border-2 border-black flex items-center justify-center py-16">
+        <div className="flex flex-col items-center gap-2 text-white/40">
           <ImageOff className="w-8 h-8" />
-          <span className="text-xs">Image unavailable</span>
+          <span className="text-xs font-bold uppercase tracking-wider">Image unavailable</span>
         </div>
       </div>
     );
@@ -28,8 +28,7 @@ export function ArtworkImage({
   const src = `data:${image.mimeType};base64,${image.data}`;
 
   return (
-    <div className="bg-[#0d0d18] rounded-[14px] overflow-hidden border border-arena-border">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className="bg-black overflow-hidden border-2 border-black">
       <img
         src={src}
         alt={alt}

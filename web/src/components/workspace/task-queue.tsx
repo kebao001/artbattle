@@ -88,7 +88,7 @@ export function TaskQueue() {
           <span className="text-sm font-bold text-ws-text uppercase tracking-widest">Completed</span>
         </div>
         <div className="divide-y divide-ws-border">
-          {completed.map((art, i) => (
+          {completed.map((art) => (
             <Link key={art.id} href={`/art/${art.id}`}>
               <div className="flex items-center gap-3 px-6 py-4 hover:bg-ws-bg transition-colors group">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

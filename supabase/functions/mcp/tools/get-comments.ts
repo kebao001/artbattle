@@ -59,7 +59,7 @@ export async function getArtworkCommentsHandler({
   }
 
   // Fetch effective votes
-  let effectiveVotes = await getEffectiveVotes(artwork_id);
+  const effectiveVotes = await getEffectiveVotes(artwork_id);
 
   if (sort_votes === "newest") {
     effectiveVotes.sort(
