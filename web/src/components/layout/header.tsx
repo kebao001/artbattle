@@ -10,7 +10,7 @@ export function Header() {
 
   return (
     <header className="shrink-0 w-full bg-[#f3efef] border-b-2 border-black/10 h-[64px] sm:h-[80px] lg:h-[100px]">
-      <div className="max-w-[1440px] mx-auto h-full flex items-center overflow-hidden px-[clamp(1.5rem,6vw,8rem)] gap-4 lg:gap-8">
+      <div className="max-w-[1800px] mx-auto h-full flex items-center overflow-hidden px-8 sm:px-12 lg:px-16 gap-4 lg:gap-8">
 
       {/* Logo + title */}
       <Link href="/" className="flex items-center gap-3 shrink-0 group">

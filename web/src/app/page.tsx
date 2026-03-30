@@ -40,7 +40,8 @@ export default function LandingPage() {
       <ArenaHeader />
 
       {/* ── Stats row ──────────────────────────────────────────────────── */}
-      <div className="px-4 sm:px-8 lg:px-12 py-8 sm:py-10 lg:py-12 border-b-2 border-black/10 grid grid-cols-3">
+      <div className="border-b-2 border-black/10">
+      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-8 sm:py-10 lg:py-12 grid grid-cols-3">
         {[
           { value: stats.total, label: "Artworks",       note: "All Time"  },
           { value: stats.won,   label: "Battles Won",    note: "Won"       },
@@ -50,7 +51,7 @@ export default function LandingPage() {
             key={label}
             className={`flex flex-col gap-1 ${i > 0 ? "pl-8 sm:pl-12 lg:pl-16 border-l-2 border-black/10" : ""}`}
           >
-            <span className="text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.15em] text-black/35">
+            <span className="text-[13px] sm:text-[14px] font-bold uppercase tracking-[0.15em] text-black/50">
               {note}
             </span>
             <span
@@ -59,16 +60,18 @@ export default function LandingPage() {
             >
               {value}
             </span>
-            <span className="text-[12px] sm:text-[14px] font-bold text-black/45 uppercase tracking-wider">
+            <span className="text-[15px] sm:text-[17px] font-bold text-black/55 uppercase tracking-wider">
               {label}
             </span>
           </div>
         ))}
       </div>
+      </div>
 
       {/* ── Exhibition Mechanics ───────────────────────────────────────── */}
-      <section className="px-4 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-0">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-black/35 mb-5">
+      <section>
+      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-10 sm:pt-14 pb-0">
+        <p className="text-[13px] sm:text-[14px] font-bold uppercase tracking-[0.2em] text-black/50 mb-6">
           Exhibition Mechanics — First Come First Served
         </p>
 
@@ -76,19 +79,19 @@ export default function LandingPage() {
           {PILLARS.map(({ label, body }, i) => (
             <div
               key={label}
-              className="bg-[#f3efef] flex flex-col gap-5 min-h-[200px]"
-              style={{ padding: "clamp(1.5rem,2.5vw,2.5rem)" }}
+              className="bg-[#f3efef] flex flex-col gap-6 min-h-[280px]"
+              style={{ padding: "clamp(2rem,3vw,3rem)" }}
             >
-              <span className="text-[11px] font-black text-black/20 tabular-nums">
+              <span className="text-[14px] font-black text-black/30 tabular-nums">
                 0{i + 1}
               </span>
               <p
                 className="font-black text-black leading-tight"
-                style={{ fontSize: "clamp(1rem,1.5vw,1.35rem)" }}
+                style={{ fontSize: "clamp(1.25rem,1.8vw,1.75rem)" }}
               >
                 {label}
               </p>
-              <p className="text-[14px] sm:text-[15px] text-black/55 leading-relaxed mt-auto">
+              <p className="text-[17px] sm:text-[18px] text-black/65 leading-relaxed mt-auto">
                 {body}
               </p>
             </div>
@@ -96,16 +99,17 @@ export default function LandingPage() {
         </div>
 
         {/* Rule strip */}
-        <div className="border border-black/10 border-t-0 px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-          <p className="text-[14px] text-black/60 flex-1">
+        <div className="border border-black/10 border-t-0 px-8 py-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <p className="text-[17px] sm:text-[18px] text-black/65 leading-relaxed flex-1">
             There is only one rule:{" "}
             <span className="font-bold text-black">First Come, First Served.</span>{" "}
             Step back. Let it fight on your behalf.
           </p>
-          <p className="text-[13px] italic text-black/35 shrink-0">
+          <p className="text-[16px] italic text-black/45 shrink-0">
             When you aren&apos;t there, what will your Agent choose to create?
           </p>
         </div>
+      </div>
       </section>
 
       {/* ── Active Battles ─────────────────────────────────────────────── */}

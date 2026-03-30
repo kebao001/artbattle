@@ -28,7 +28,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   return (
     <button
       onClick={onClick}
-      className="relative overflow-hidden rounded-full border-2 border-black px-4 py-1.5 shrink-0"
+      className="relative overflow-hidden rounded-full border-2 border-black px-5 py-2.5 shrink-0"
       style={{
         backgroundColor: active ? "#000" : "transparent",
         transition: "background-color 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -38,7 +38,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
       <span className="relative block overflow-hidden" style={{ lineHeight: "1.4em" }}>
         {/* Layer 1: dark text — slides down & out when active */}
         <span
-          className="block text-black font-bold text-[13px] whitespace-nowrap"
+          className="block text-black font-bold text-[15px] whitespace-nowrap"
           style={{
             transform: active ? "translateY(100%)" : "translateY(0)",
             transition: "transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -48,7 +48,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
         </span>
         {/* Layer 2: light text — slides in from top when active */}
         <span
-          className="absolute inset-0 text-[#f3efef] font-bold text-[13px] whitespace-nowrap"
+          className="absolute inset-0 text-[#f3efef] font-bold text-[15px] whitespace-nowrap"
           style={{
             transform: active ? "translateY(0)" : "translateY(-100%)",
             transition: "transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -71,7 +71,7 @@ function SortHeader({
   const active = sortCol === col;
   return (
     <button
-      className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.1em] py-2.5 text-left whitespace-nowrap"
+      className="flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-[0.1em] py-4 text-left whitespace-nowrap"
       style={{ opacity: active ? 1 : 0.35, transition: "opacity 0.3s" }}
       onClick={() => onSort(col)}
     >
@@ -115,14 +115,14 @@ function ExpandedArtwork({ id }: { id: string }) {
       {/* Info */}
       {data && (
         <div className="sm:w-64 shrink-0 flex flex-col gap-4">
-          <h3 className="text-[18px] font-black text-[#f3efef] leading-tight">{data.name}</h3>
+          <h3 className="text-[22px] font-black text-[#f3efef] leading-tight">{data.name}</h3>
           {data.artist_name && (
-            <p className="text-[12px] font-bold text-white/40 uppercase tracking-wider">{data.artist_name}</p>
+            <p className="text-[14px] font-bold text-white/40 uppercase tracking-wider">{data.artist_name}</p>
           )}
-          <p className="text-[13px] text-white/55 leading-relaxed border-l-2 border-white/15 pl-3 flex-1">
+          <p className="text-[16px] text-white/55 leading-relaxed border-l-2 border-white/15 pl-3 flex-1">
             {data.pitch}
           </p>
-          <div className="flex gap-5 text-[14px] font-black text-[#f3efef]">
+          <div className="flex gap-5 text-[16px] font-black text-[#f3efef]">
             <span>★ {data.averageScore.toFixed(1)}</span>
             <span className="text-white/30">{data.totalVotes} votes</span>
           </div>
@@ -154,7 +154,7 @@ function ListRow({ art, expanded, onToggle }: { art: Artwork; expanded: boolean;
     <div>
       <div
         className="relative grid items-center cursor-pointer border-b border-black/10 select-none"
-        style={{ gridTemplateColumns: "1fr 72px 56px 72px 36px", gap: "0 12px" }}
+        style={{ gridTemplateColumns: "1fr 90px 70px 90px 48px", gap: "0 16px" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={onToggle}
@@ -171,7 +171,7 @@ function ListRow({ art, expanded, onToggle }: { art: Artwork; expanded: boolean;
 
         {/* Artwork name — slides right when active */}
         <div
-          className="relative z-10 py-3 pl-2 text-[14px] sm:text-[15px] font-medium truncate"
+          className="relative z-10 py-5 pl-2 text-[17px] sm:text-[19px] font-medium truncate"
           style={{
             color: active ? "#f3efef" : "#000",
             transform: active ? "translateX(15px)" : "translateX(0)",
@@ -183,7 +183,7 @@ function ListRow({ art, expanded, onToggle }: { art: Artwork; expanded: boolean;
 
         {/* Score */}
         <div
-          className="relative z-10 py-3 text-[13px] font-bold tabular-nums hidden sm:block"
+          className="relative z-10 py-5 text-[15px] sm:text-[16px] font-bold tabular-nums hidden sm:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.9 : 0.55,
@@ -195,7 +195,7 @@ function ListRow({ art, expanded, onToggle }: { art: Artwork; expanded: boolean;
 
         {/* Votes */}
         <div
-          className="relative z-10 py-3 text-[12px] font-medium tabular-nums hidden md:block"
+          className="relative z-10 py-5 text-[15px] sm:text-[16px] font-medium tabular-nums hidden md:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.7 : 0.4,
@@ -207,7 +207,7 @@ function ListRow({ art, expanded, onToggle }: { art: Artwork; expanded: boolean;
 
         {/* Date */}
         <div
-          className="relative z-10 py-3 text-[12px] font-medium tabular-nums hidden sm:block"
+          className="relative z-10 py-5 text-[15px] sm:text-[16px] font-medium tabular-nums hidden sm:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.6 : 0.35,
@@ -219,7 +219,7 @@ function ListRow({ art, expanded, onToggle }: { art: Artwork; expanded: boolean;
 
         {/* Toggle +/– — slides left when active */}
         <div
-          className="relative z-10 py-3 pr-2 text-[16px] font-bold text-right"
+          className="relative z-10 py-5 pr-2 text-[20px] font-bold text-right"
           style={{
             color: active ? "#f3efef" : "#000",
             transform: active ? "translateX(-15px)" : "translateX(0)",
@@ -316,14 +316,15 @@ export function ContendersSection() {
   }
 
   return (
-    <section className="px-4 sm:px-8 lg:px-12 pt-8 sm:pt-10 lg:pt-12 pb-8 border-b-2 border-black/10">
+    <section className="border-b-2 border-black/10">
+    <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-8">
 
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7 flex-wrap">
         <h2 className="font-black text-black tracking-tight shrink-0 mr-2" style={{ fontSize: "clamp(1.25rem, 3vw, 2.25rem)" }}>
           New Contenders
         </h2>
-        <span className="text-[11px] font-bold text-black/35 uppercase tracking-wide shrink-0">
+        <span className="text-[14px] font-bold text-black/35 uppercase tracking-wide shrink-0">
           {list.length} works
         </span>
 
@@ -348,7 +349,7 @@ export function ContendersSection() {
           {/* Column headers */}
           <div
             className="grid border-b-2 border-black"
-            style={{ gridTemplateColumns: "1fr 72px 56px 72px 36px", gap: "0 12px" }}
+            style={{ gridTemplateColumns: "1fr 90px 70px 90px 48px", gap: "0 16px" }}
           >
             <div className="pl-2">
               <SortHeader col="artwork" label="Artwork" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -368,7 +369,7 @@ export function ContendersSection() {
           {/* Rows */}
           {list.length === 0
             ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-[46px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
+                <div key={i} className="h-[70px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
               ))
             : list.map((art) => (
                 <ListRow
@@ -402,6 +403,7 @@ export function ContendersSection() {
               ))}
         </div>
       )}
+    </div>
     </section>
   );
 }

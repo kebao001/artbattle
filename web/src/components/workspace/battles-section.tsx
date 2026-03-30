@@ -24,7 +24,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   return (
     <button
       onClick={onClick}
-      className="relative overflow-hidden rounded-full border-2 border-black px-4 py-1.5 shrink-0"
+      className="relative overflow-hidden rounded-full border-2 border-black px-5 py-2.5 shrink-0"
       style={{
         backgroundColor: active ? "#000" : "transparent",
         transition: "background-color 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -32,7 +32,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
     >
       <span className="relative block overflow-hidden" style={{ lineHeight: "1.4em" }}>
         <span
-          className="block text-black font-bold text-[13px] whitespace-nowrap"
+          className="block text-black font-bold text-[15px] whitespace-nowrap"
           style={{
             transform: active ? "translateY(100%)" : "translateY(0)",
             transition: "transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -41,7 +41,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
           {label}
         </span>
         <span
-          className="absolute inset-0 text-[#f3efef] font-bold text-[13px] whitespace-nowrap"
+          className="absolute inset-0 text-[#f3efef] font-bold text-[15px] whitespace-nowrap"
           style={{
             transform: active ? "translateY(0)" : "translateY(-100%)",
             transition: "transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -62,7 +62,7 @@ function SortHeader({ col, label, sortCol, sortDir, onSort }: {
   const active = sortCol === col;
   return (
     <button
-      className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.1em] py-2.5 text-left whitespace-nowrap"
+      className="flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-[0.1em] py-4 text-left whitespace-nowrap"
       style={{ opacity: active ? 1 : 0.35, transition: "opacity 0.3s" }}
       onClick={() => onSort(col)}
     >
@@ -99,17 +99,17 @@ function ArtPanel({ detail, loading, art }: { detail: ArtworkDetail | undefined;
         )}
       </div>
       <div>
-        <p className="text-[15px] font-black text-[#f3efef] truncate">{art.name}</p>
+        <p className="text-[18px] font-black text-[#f3efef] truncate">{art.name}</p>
         {detail?.artist_name && (
-          <p className="text-[11px] font-bold text-white/35 uppercase tracking-wider mt-0.5">{detail.artist_name}</p>
+          <p className="text-[13px] font-bold text-white/35 uppercase tracking-wider mt-0.5">{detail.artist_name}</p>
         )}
-        <div className="flex gap-4 mt-2 text-[13px] font-bold text-[#f3efef]">
+        <div className="flex gap-4 mt-2 text-[16px] font-bold text-[#f3efef]">
           <span>★ {art.averageScore.toFixed(1)}</span>
           <span className="text-white/30">{art.totalVotes} votes</span>
         </div>
         <Link
           href={`/art/${art.id}`}
-          className="inline-block text-[11px] font-bold uppercase tracking-[0.12em] text-white/35 hover:text-white transition-colors mt-2"
+          className="inline-block text-[13px] font-bold uppercase tracking-[0.12em] text-white/35 hover:text-white transition-colors mt-2"
           onClick={(e) => e.stopPropagation()}
         >
           View →
@@ -127,7 +127,7 @@ function ExpandedBattle({ artA, artB }: { artA: Artwork; artB: Artwork }) {
   return (
     <div className="bg-black p-6 sm:p-8 flex flex-col sm:flex-row gap-6 sm:gap-10">
       <ArtPanel detail={detailA} loading={loadA} art={artA} />
-      <div className="flex items-center justify-center shrink-0 text-[28px] font-black text-white/15 self-start sm:self-center pt-4 sm:pt-0">VS</div>
+      <div className="flex items-center justify-center shrink-0 text-[40px] font-black text-white/15 self-start sm:self-center pt-4 sm:pt-0">VS</div>
       <ArtPanel detail={detailB} loading={loadB} art={artB} />
     </div>
   );
@@ -149,7 +149,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
     <div>
       <div
         className="relative grid items-center cursor-pointer border-b border-black/10 select-none"
-        style={{ gridTemplateColumns: "1fr 80px 72px 72px 36px", gap: "0 12px" }}
+        style={{ gridTemplateColumns: "1fr 100px 90px 90px 48px", gap: "0 16px" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={onToggle}
@@ -166,7 +166,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
 
         {/* Battle name */}
         <div
-          className="relative z-10 py-3 pl-2 flex items-center gap-2"
+          className="relative z-10 py-5 pl-2 flex items-center gap-3"
           style={{
             color: active ? "#f3efef" : "#000",
             transform: active ? "translateX(15px)" : "translateX(0)",
@@ -175,18 +175,18 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
         >
           {pair.isLive && (
             <span
-              className="w-1.5 h-1.5 rounded-full shrink-0 animate-pulse"
+              className="w-2 h-2 rounded-full shrink-0 animate-pulse"
               style={{ backgroundColor: active ? "#f3efef" : "#000" }}
             />
           )}
-          <span className="text-[14px] sm:text-[15px] font-medium truncate">
+          <span className="text-[17px] sm:text-[19px] font-medium truncate">
             {pair.artA.name.split(" ")[0]} vs {pair.artB.name.split(" ")[0]}
           </span>
         </div>
 
         {/* Status */}
         <div
-          className="relative z-10 py-3 text-[12px] font-bold hidden sm:block"
+          className="relative z-10 py-5 text-[15px] font-bold hidden sm:block"
           style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.8 : 0.5, transition: colorTx }}
         >
           {pair.isLive ? "Live" : "Open"}
@@ -194,7 +194,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
 
         {/* Votes */}
         <div
-          className="relative z-10 py-3 text-[12px] font-medium tabular-nums hidden sm:block"
+          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden sm:block"
           style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.7 : 0.4, transition: colorTx }}
         >
           {totalVotes}
@@ -202,7 +202,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
 
         {/* Date */}
         <div
-          className="relative z-10 py-3 text-[12px] font-medium tabular-nums hidden md:block"
+          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
           style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.6 : 0.35, transition: colorTx }}
         >
           {fmtDate(pair.artA.created_at)}
@@ -210,7 +210,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
 
         {/* Toggle */}
         <div
-          className="relative z-10 py-3 pr-2 text-[16px] font-bold text-right"
+          className="relative z-10 py-5 pr-2 text-[20px] font-bold text-right"
           style={{
             color: active ? "#f3efef" : "#000",
             transform: active ? "translateX(-15px)" : "translateX(0)",
@@ -273,14 +273,15 @@ export function BattlesSection() {
   }
 
   return (
-    <section className="px-4 sm:px-8 lg:px-12 pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12">
+    <section>
+    <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12">
 
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7 flex-wrap">
         <h2 className="font-black text-black tracking-tight shrink-0 mr-2" style={{ fontSize: "clamp(1.25rem, 3vw, 2.25rem)" }}>
           Active Battles
         </h2>
-        <span className="text-[11px] font-bold text-black/35 uppercase tracking-wide shrink-0">
+        <span className="text-[14px] font-bold text-black/35 uppercase tracking-wide shrink-0">
           {pairs.length * 2} works
         </span>
         <div className="flex items-center gap-1 ml-auto flex-wrap justify-end">
@@ -293,7 +294,7 @@ export function BattlesSection() {
       {/* Column headers */}
       <div
         className="grid border-b-2 border-black"
-        style={{ gridTemplateColumns: "1fr 80px 72px 72px 36px", gap: "0 12px" }}
+        style={{ gridTemplateColumns: "1fr 100px 90px 90px 48px", gap: "0 16px" }}
       >
         <div className="pl-2">
           <SortHeader col="artworks" label="Battle" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -313,7 +314,7 @@ export function BattlesSection() {
       {/* Rows */}
       {pairs.length === 0
         ? Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-[46px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
+            <div key={i} className="h-[70px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
           ))
         : pairs.map((pair) => (
             <BattleRow
@@ -323,6 +324,7 @@ export function BattlesSection() {
               onToggle={() => toggleExpand(pair.artA.id)}
             />
           ))}
+    </div>
     </section>
   );
 }
