@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtworks } from "@/hooks/use-artworks";
 import { useArtwork } from "@/hooks/use-artwork";
+import { ArtworkImage } from "@/components/artwork/artwork-image";
 import type { Artwork } from "@/lib/types";
 
 type SortCol = "name" | "score" | "votes" | "date";
@@ -92,19 +93,15 @@ function ExpandedPreview({ art }: { art: Artwork }) {
   return (
     <div className="bg-black flex flex-col sm:flex-row gap-0">
       {/* Image — left panel */}
-      <div className="flex-1 min-w-0 flex items-center justify-center bg-black/60 p-6 sm:p-10" style={{ minHeight: 240 }}>
+      <div className="flex-1 min-w-0">
         {isLoading ? (
-          <div className="w-full aspect-video bg-white/5 animate-pulse" />
-        ) : data?.image ? (
-          <Link href={`/art/${art.id}`} onClick={(e) => e.stopPropagation()}>
-            <img
-              src={`data:${data.image.mimeType};base64,${data.image.data}`}
-              alt={art.name}
-              className="max-h-[400px] max-w-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
-            />
-          </Link>
+          <div className="w-full bg-black/60" style={{ minHeight: 240 }}>
+            <div className="w-full h-full bg-white/5 animate-pulse" style={{ minHeight: 240 }} />
+          </div>
         ) : (
-          <span className="font-black text-white/10 text-6xl">{initials(art.name)}</span>
+          <Link href={`/art/${art.id}`} onClick={(e) => e.stopPropagation()} className="block hover:opacity-90 transition-opacity">
+            <ArtworkImage image={data?.image} alt={art.name} maxHeight="420px" />
+          </Link>
         )}
       </div>
 
