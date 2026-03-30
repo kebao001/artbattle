@@ -5,11 +5,11 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtworks } from "@/hooks/use-artworks";
 import { useArtwork } from "@/hooks/use-artwork";
-import type { Artwork, ArtworkDetail } from "@/lib/types";
+import type { Artwork } from "@/lib/types";
 
-type SortCol = "artworks" | "votes" | "date";
+type SortCol = "name" | "score" | "votes" | "date";
 type SortDir = "asc" | "desc";
-const FILTERS = ["All", "Live Now", "Ending Soon", "Completed"];
+const FILTERS = ["All", "Top Rated", "Most Voted", "Newest"];
 
 function initials(name: string) {
   return name.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -19,7 +19,7 @@ function fmtDate(d: string) {
   return `${String(dt.getDate()).padStart(2, "0")}.${String(dt.getMonth() + 1).padStart(2, "0")}.${String(dt.getFullYear()).slice(2)}`;
 }
 
-// ── Animated pill (same as ContendersSection) ────────────────────────────────
+// ── Pill ─────────────────────────────────────────────────────────────────────
 function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
@@ -85,61 +85,82 @@ function SortHeader({ col, label, sortCol, sortDir, onSort }: {
   );
 }
 
-// ── Art panel (extracted to avoid component-in-render) ───────────────────────
-function ArtPanel({ detail, loading, art }: { detail: ArtworkDetail | undefined; loading: boolean; art: Artwork }) {
+// ── Layer 2 + 3: Expanded preview with image, pitch, and CTA ─────────────────
+function ExpandedPreview({ art }: { art: Artwork }) {
+  const { data, isLoading } = useArtwork(art.id);
+
   return (
-    <div className="flex-1 min-w-0 flex flex-col gap-4">
-      <div className="bg-white/5 flex items-center justify-center" style={{ minHeight: 160, aspectRatio: "16/9" }}>
-        {loading ? (
-          <div className="w-full h-full bg-white/5 animate-pulse" />
-        ) : detail?.image ? (
-          <img src={`data:${detail.image.mimeType};base64,${detail.image.data}`} alt={art.name} className="max-h-[320px] max-w-full object-contain" />
+    <div className="bg-black flex flex-col sm:flex-row gap-0">
+      {/* Image — left panel */}
+      <div className="flex-1 min-w-0 flex items-center justify-center bg-black/60 p-6 sm:p-10" style={{ minHeight: 240 }}>
+        {isLoading ? (
+          <div className="w-full aspect-video bg-white/5 animate-pulse" />
+        ) : data?.image ? (
+          <Link href={`/art/${art.id}`} onClick={(e) => e.stopPropagation()}>
+            <img
+              src={`data:${data.image.mimeType};base64,${data.image.data}`}
+              alt={art.name}
+              className="max-h-[400px] max-w-full object-contain cursor-pointer hover:opacity-90 transition-opacity"
+            />
+          </Link>
         ) : (
-          <span className="font-black text-white/15 text-4xl">{initials(art.name)}</span>
+          <span className="font-black text-white/10 text-6xl">{initials(art.name)}</span>
         )}
       </div>
-      <div>
-        <p className="text-[18px] font-black text-[#f3efef] truncate">{art.name}</p>
-        {detail?.artist_name && (
-          <p className="text-[13px] font-bold text-white/35 uppercase tracking-wider mt-0.5">{detail.artist_name}</p>
+
+      {/* Info — right panel */}
+      <div className="sm:w-[380px] shrink-0 flex flex-col gap-5 p-6 sm:p-10 border-l border-white/[0.06]">
+        <div>
+          <p className="text-[12px] font-bold uppercase tracking-[0.15em] text-white/30 mb-2">Artwork</p>
+          <h3
+            className="font-black text-[#f3efef] leading-tight"
+            style={{ fontSize: "clamp(1.25rem, 2vw, 1.75rem)" }}
+          >
+            {data?.name ?? art.name}
+          </h3>
+          {data?.artist_name && (
+            <p className="text-[13px] font-bold text-white/35 uppercase tracking-wider mt-1.5">
+              {data.artist_name}
+            </p>
+          )}
+        </div>
+
+        {data?.pitch && (
+          <p className="text-[16px] sm:text-[17px] text-white/60 leading-relaxed border-l-2 border-white/15 pl-4 flex-1">
+            &ldquo;{data.pitch}&rdquo;
+          </p>
         )}
-        <div className="flex gap-4 mt-2 text-[16px] font-bold text-[#f3efef]">
+
+        <div className="flex gap-5 text-[15px] font-bold text-[#f3efef]">
           <span>★ {art.averageScore.toFixed(1)}</span>
           <span className="text-white/30">{art.totalVotes} votes</span>
         </div>
+
+        {/* Layer 3 — CTA */}
         <Link
           href={`/art/${art.id}`}
-          className="inline-block text-[13px] font-bold uppercase tracking-[0.12em] text-white/35 hover:text-white transition-colors mt-2"
+          className="flex items-center justify-between px-5 py-4 bg-white text-black font-black text-[15px] uppercase tracking-wide hover:bg-[#f3efef] transition-colors group"
           onClick={(e) => e.stopPropagation()}
         >
-          View →
+          Enter Battle Room
+          <span
+            className="text-[18px]"
+            style={{ transform: "translateX(0)", transition: "transform 0.2s" }}
+          >
+            →
+          </span>
         </Link>
       </div>
     </div>
   );
 }
 
-// ── Expanded battle detail ────────────────────────────────────────────────────
-function ExpandedBattle({ artA, artB }: { artA: Artwork; artB: Artwork }) {
-  const { data: detailA, isLoading: loadA } = useArtwork(artA.id);
-  const { data: detailB, isLoading: loadB } = useArtwork(artB.id);
-
-  return (
-    <div className="bg-black p-6 sm:p-8 flex flex-col sm:flex-row gap-6 sm:gap-10">
-      <ArtPanel detail={detailA} loading={loadA} art={artA} />
-      <div className="flex items-center justify-center shrink-0 text-[40px] font-black text-white/15 self-start sm:self-center pt-4 sm:pt-0">VS</div>
-      <ArtPanel detail={detailB} loading={loadB} art={artB} />
-    </div>
-  );
-}
-
-// ── Battle row ────────────────────────────────────────────────────────────────
-type Pair = { artA: Artwork; artB: Artwork; isLive: boolean };
-
-function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean; onToggle: () => void }) {
+// ── Layer 1: Individual artwork row ──────────────────────────────────────────
+function ArtworkRow({ art, isLead, expanded, onToggle }: {
+  art: Artwork; isLead: boolean; expanded: boolean; onToggle: () => void;
+}) {
   const [hovered, setHovered] = useState(false);
   const active = expanded || hovered;
-  const totalVotes = pair.artA.totalVotes + pair.artB.totalVotes;
 
   const fillTx  = "transform 0.1s cubic-bezier(0.2, 0.6, 0.4, 1)";
   const colorTx = "color 0.3s, opacity 0.3s";
@@ -164,7 +185,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
           }}
         />
 
-        {/* Battle name */}
+        {/* Artwork name */}
         <div
           className="relative z-10 py-5 pl-2 flex items-center gap-3"
           style={{
@@ -173,23 +194,23 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
             transition: moveTx,
           }}
         >
-          {pair.isLive && (
+          {isLead && (
             <span
               className="w-2 h-2 rounded-full shrink-0 animate-pulse"
               style={{ backgroundColor: active ? "#f3efef" : "#000" }}
             />
           )}
           <span className="text-[17px] sm:text-[19px] font-medium truncate">
-            {pair.artA.name.split(" ")[0]} vs {pair.artB.name.split(" ")[0]}
+            {art.name}
           </span>
         </div>
 
-        {/* Status */}
+        {/* Score */}
         <div
-          className="relative z-10 py-5 text-[15px] font-bold hidden sm:block"
-          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.8 : 0.5, transition: colorTx }}
+          className="relative z-10 py-5 text-[15px] font-bold tabular-nums hidden sm:block"
+          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.9 : 0.55, transition: colorTx }}
         >
-          {pair.isLive ? "Live" : "Open"}
+          {art.totalVotes > 0 ? `★ ${art.averageScore.toFixed(1)}` : "—"}
         </div>
 
         {/* Votes */}
@@ -197,7 +218,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
           className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden sm:block"
           style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.7 : 0.4, transition: colorTx }}
         >
-          {totalVotes}
+          {art.totalVotes}
         </div>
 
         {/* Date */}
@@ -205,7 +226,7 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
           className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
           style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.6 : 0.35, transition: colorTx }}
         >
-          {fmtDate(pair.artA.created_at)}
+          {fmtDate(art.created_at)}
         </div>
 
         {/* Toggle */}
@@ -224,14 +245,14 @@ function BattleRow({ pair, expanded, onToggle }: { pair: Pair; expanded: boolean
       <AnimatePresence>
         {expanded && (
           <motion.div
-            key={`bexp-${pair.artA.id}`}
+            key={`preview-${art.id}`}
             initial={{ height: 0 }}
             animate={{ height: "auto" }}
             exit={{ height: 0 }}
             transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <ExpandedBattle artA={pair.artA} artB={pair.artB} />
+            <ExpandedPreview art={art} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -247,21 +268,20 @@ export function BattlesSection() {
   const [expandedId, setExpanded] = useState<string | null>(null);
   const { data } = useArtworks(1, 20);
 
-  const pairs = useMemo((): Pair[] => {
-    const list = [...(data?.artworks ?? [])].sort(
-      (a, b) => {
-        let cmp = 0;
-        if (sortCol === "votes") cmp = a.totalVotes - b.totalVotes;
-        else if (sortCol === "artworks") cmp = a.name.localeCompare(b.name);
-        else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        return sortDir === "asc" ? cmp : -cmp;
-      }
-    );
-    const out: Pair[] = [];
-    for (let i = 0; i + 1 < list.length; i += 2)
-      out.push({ artA: list[i], artB: list[i + 1], isLive: i === 0 });
-    return out;
-  }, [data, sortCol, sortDir]);
+  const list = useMemo((): Artwork[] => {
+    let raw = [...(data?.artworks ?? [])];
+    if (filter === "Top Rated") return raw.sort((a, b) => b.averageScore - a.averageScore);
+    if (filter === "Most Voted") return raw.sort((a, b) => b.totalVotes - a.totalVotes);
+    if (filter === "Newest")    return raw.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return raw.sort((a, b) => {
+      let cmp = 0;
+      if (sortCol === "name")  cmp = a.name.localeCompare(b.name);
+      else if (sortCol === "score") cmp = a.averageScore - b.averageScore;
+      else if (sortCol === "votes") cmp = a.totalVotes - b.totalVotes;
+      else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [data, filter, sortCol, sortDir]);
 
   function handleSort(col: SortCol) {
     if (sortCol === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -278,11 +298,11 @@ export function BattlesSection() {
 
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7 flex-wrap">
-        <h2 className="font-black text-black tracking-tight shrink-0 mr-2" style={{ fontSize: "clamp(1.25rem, 3vw, 2.25rem)" }}>
-          Active Battles
+        <h2 className="font-black text-black tracking-tight shrink-0 mr-2" style={{ fontSize: "clamp(1rem, 2.5vw, 2.25rem)" }}>
+          Top Artwork for Gallery Presence
         </h2>
         <span className="text-[14px] font-bold text-black/35 uppercase tracking-wide shrink-0">
-          {pairs.length * 2} works
+          {list.length} works
         </span>
         <div className="flex items-center gap-1 ml-auto flex-wrap justify-end">
           {FILTERS.map((f) => (
@@ -297,10 +317,10 @@ export function BattlesSection() {
         style={{ gridTemplateColumns: "1fr 100px 90px 90px 48px", gap: "0 16px" }}
       >
         <div className="pl-2">
-          <SortHeader col="artworks" label="Battle" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <SortHeader col="name" label="Artwork" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
         </div>
         <div className="hidden sm:block">
-          <SortHeader col="votes" label="Status" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <SortHeader col="score" label="Score" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
         </div>
         <div className="hidden sm:block">
           <SortHeader col="votes" label="Votes" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -312,16 +332,17 @@ export function BattlesSection() {
       </div>
 
       {/* Rows */}
-      {pairs.length === 0
+      {list.length === 0
         ? Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-[70px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
           ))
-        : pairs.map((pair) => (
-            <BattleRow
-              key={pair.artA.id}
-              pair={pair}
-              expanded={expandedId === pair.artA.id}
-              onToggle={() => toggleExpand(pair.artA.id)}
+        : list.map((art, i) => (
+            <ArtworkRow
+              key={art.id}
+              art={art}
+              isLead={i === 0}
+              expanded={expandedId === art.id}
+              onToggle={() => toggleExpand(art.id)}
             />
           ))}
     </div>

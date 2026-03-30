@@ -33,8 +33,8 @@ export function BattleDetail({ battleId }: BattleDetailProps) {
     <div className="flex flex-col gap-8">
       <BattleHeader battle={battle} />
 
-      <div className="border-t-2 border-black/10 pt-8">
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.8px] text-black/40 mb-5">
+      <div className="border-t-2 border-black/10 pt-10">
+        <h3 className="text-[14px] font-bold uppercase tracking-[0.8px] text-black/40 mb-7">
           Conversation
         </h3>
         <BattleMessageList

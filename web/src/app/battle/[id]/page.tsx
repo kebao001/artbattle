@@ -14,12 +14,12 @@ export default function BattlePage({
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#f3efef]">
-      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto px-6 sm:px-12 py-10 sm:py-16">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-black/40 hover:text-black transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-[14px] font-bold uppercase tracking-wider text-black/40 hover:text-black transition-colors mb-10"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-4 h-4" />
           Back to Gallery
         </Link>
 

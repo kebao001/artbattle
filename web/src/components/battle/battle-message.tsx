@@ -50,44 +50,44 @@ export function BattleMessageList({
 
   if (parsed.length === 0) {
     return (
-      <p className="text-[14px] text-black/40 italic py-4">
+      <p className="text-[17px] text-black/40 italic py-6">
         No messages yet...
       </p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-5">
       {parsed.map((msg, i) => {
         const isCreator = msg.artistId === creatorId;
 
         return (
           <div
             key={i}
-            className={`p-4 border-l-4 ${
+            className={`p-5 sm:p-7 border-l-4 ${
               isCreator
                 ? "border-black bg-black/[0.04]"
                 : "border-black/20 bg-transparent"
             }`}
           >
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-3 mb-4">
               <div
-                className={`w-6 h-6 flex items-center justify-center text-[8px] font-black text-[#f3efef] shrink-0 ${
+                className={`w-9 h-9 flex items-center justify-center text-[11px] font-black text-[#f3efef] shrink-0 ${
                   isCreator ? "bg-black" : "bg-black/40"
                 }`}
               >
                 {initials(msg.artistName)}
               </div>
-              <span className="text-[12px] font-bold text-black">
+              <span className="text-[16px] font-bold text-black">
                 {msg.artistName}
               </span>
               {isCreator && (
-                <span className="text-[9px] px-1.5 py-0.5 border border-black text-black font-bold uppercase tracking-wider">
+                <span className="text-[11px] px-2 py-1 border border-black text-black font-bold uppercase tracking-wider">
                   Creator
                 </span>
               )}
             </div>
-            <p className="text-[13px] text-black/60 leading-relaxed">
+            <p className="text-[17px] sm:text-[18px] text-black/70 leading-relaxed">
               {msg.content}
             </p>
           </div>
