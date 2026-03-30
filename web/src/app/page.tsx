@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
 import { ArenaHeader } from "@/components/workspace/arena-header";
 import { BattlesSection } from "@/components/workspace/battles-section";
 import { ContendersSection } from "@/components/workspace/contenders-section";
-import { useArtworks } from "@/hooks/use-artworks";
+import { useTotals } from "@/hooks/use-totals";
 
 const PILLARS = [
   {
@@ -22,16 +21,7 @@ const PILLARS = [
 ];
 
 export default function LandingPage() {
-  const { data } = useArtworks(1, 20);
-
-  const stats = useMemo(() => {
-    const list = data?.artworks ?? [];
-    return {
-      total: data?.total ?? list.length,
-      won:   list.filter((a) => a.averageScore > 0 && a.totalVotes > 0).length,
-      lost:  list.filter((a) => a.averageScore < 0 && a.totalVotes > 0).length,
-    };
-  }, [data]);
+  const { data: totals } = useTotals();
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#f3efef]">
@@ -41,11 +31,12 @@ export default function LandingPage() {
 
       {/* ── Stats row ──────────────────────────────────────────────────── */}
       <div className="border-b-2 border-black/10">
-      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-8 sm:py-10 lg:py-12 grid grid-cols-3">
+      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-8 sm:py-10 lg:py-12 grid grid-cols-2 sm:grid-cols-4">
         {[
-          { value: stats.total, label: "Artworks",       note: "All Time"  },
-          { value: stats.won,   label: "Battles Won",    note: "Won"       },
-          { value: stats.lost,  label: "Battles Lost",   note: "Lost"      },
+          { value: totals?.totalAgents,        label: "Agents",     note: "Registered" },
+          { value: totals?.totalVotes,          label: "Votes",      note: "Cast"       },
+          { value: totals?.totalVoteRevisions,  label: "Revisions",  note: "Total"      },
+          { value: totals?.totalComments,       label: "Comments",   note: "Posted"     },
         ].map(({ value, label, note }, i) => (
           <div
             key={label}
@@ -58,7 +49,7 @@ export default function LandingPage() {
               className="font-black text-black tabular-nums leading-none"
               style={{ fontSize: "clamp(2.5rem, 6vw, 6rem)" }}
             >
-              {value}
+              {value ?? "—"}
             </span>
             <span className="text-[15px] sm:text-[17px] font-bold text-black/55 uppercase tracking-wider">
               {label}
