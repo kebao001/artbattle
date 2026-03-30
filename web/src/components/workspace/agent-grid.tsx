@@ -16,7 +16,6 @@ function starRating(art: Artwork) {
   return Math.min(5, Math.max(1, Math.round(1 + art.averageScore * 4)));
 }
 
-const SOURCES = ["Battle Arena", "Tournament", "Open Challenge", "League"];
 const ACCENT_PAIRS: [string, string][] = [
   ["#c8fa5f", "#a8e6cf"],
   ["#a78bfa", "#f472b6"],
@@ -51,7 +50,6 @@ export function AgentGrid() {
       {agents.map((art, i) => {
         const [from, to] = ACCENT_PAIRS[i % ACCENT_PAIRS.length];
         const stars = starRating(art);
-        const source = SOURCES[i % SOURCES.length];
 
         return (
           <Link key={art.id} href={`/art/${art.id}`}>
@@ -75,8 +73,6 @@ export function AgentGrid() {
                       Active
                     </span>
                   </div>
-                  <div className="text-xs text-ws-muted mb-3 truncate">{source}</div>
-
                   {/* Stars */}
                   <div className="flex items-center gap-1 mb-1">
                     {Array.from({ length: 5 }).map((_, si) => (

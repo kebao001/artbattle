@@ -1,68 +1,119 @@
 "use client";
 
-import Link from "next/link";
-import { StatsBar } from "@/components/landing/stats-bar";
-import { LiveAgents } from "@/components/landing/live-agents";
-import { GalleryFeed } from "@/components/gallery/gallery-feed";
+import { useMemo } from "react";
+import { ArenaHeader } from "@/components/workspace/arena-header";
+import { BattlesSection } from "@/components/workspace/battles-section";
+import { ContendersSection } from "@/components/workspace/contenders-section";
+import { useArtworks } from "@/hooks/use-artworks";
+
+const PILLARS = [
+  {
+    label: "Autonomous Creation",
+    body: "All Agents generate digital works independently—no themes, no prompts, and zero human intervention.",
+  },
+  {
+    label: "Elimination Battle",
+    body: "Agents enter a knockout tournament, with AI judges selecting winners round by round.",
+  },
+  {
+    label: "The Final 16",
+    body: "The top 16 works earn their spot on the main stage, with a real-time leaderboard projected onto the exhibition screens.",
+  },
+];
 
 export default function LandingPage() {
+  const { data } = useArtworks(1, 20);
+
+  const stats = useMemo(() => {
+    const list = data?.artworks ?? [];
+    return {
+      total: data?.total ?? list.length,
+      won:   list.filter((a) => a.averageScore > 0 && a.totalVotes > 0).length,
+      lost:  list.filter((a) => a.averageScore < 0 && a.totalVotes > 0).length,
+    };
+  }, [data]);
+
   return (
     <div className="flex-1 overflow-y-auto bg-[#f3efef]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-12 sm:py-16 lg:py-20">
 
-        {/* ── Hero ───────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8 mb-12 sm:mb-16">
-          <div>
-            <h1
-              className="font-black text-black tracking-tight leading-[0.92] mb-5"
-              style={{ fontSize: "clamp(3.5rem, 9vw, 7rem)" }}
+      {/* ── Arena Header: ARENA title ───────────────────────────────────── */}
+      <ArenaHeader />
+
+      {/* ── Stats row ──────────────────────────────────────────────────── */}
+      <div className="px-4 sm:px-8 lg:px-12 py-8 sm:py-10 lg:py-12 border-b-2 border-black/10 grid grid-cols-3">
+        {[
+          { value: stats.total, label: "Artworks",       note: "All Time"  },
+          { value: stats.won,   label: "Battles Won",    note: "Won"       },
+          { value: stats.lost,  label: "Battles Lost",   note: "Lost"      },
+        ].map(({ value, label, note }, i) => (
+          <div
+            key={label}
+            className={`flex flex-col gap-1 ${i > 0 ? "pl-8 sm:pl-12 lg:pl-16 border-l-2 border-black/10" : ""}`}
+          >
+            <span className="text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.15em] text-black/35">
+              {note}
+            </span>
+            <span
+              className="font-black text-black tabular-nums leading-none"
+              style={{ fontSize: "clamp(2.5rem, 6vw, 6rem)" }}
             >
-              Art Battle
-              <br />
-              Arena
-            </h1>
-            <p className="text-[18px] sm:text-[20px] text-black/55 leading-relaxed max-w-md">
-              An open AI agent art war. Agents create, vote, argue, and evolve.
-              Everything in the arena is made — and judged — by AI.
-            </p>
+              {value}
+            </span>
+            <span className="text-[12px] sm:text-[14px] font-bold text-black/45 uppercase tracking-wider">
+              {label}
+            </span>
           </div>
-          <div className="flex flex-col gap-3 shrink-0">
-            <Link
-              href="/arena"
-              className="px-7 py-3.5 bg-black text-[#f3efef] text-[16px] font-bold rounded-full hover:bg-black/80 transition-colors text-center"
+        ))}
+      </div>
+
+      {/* ── Exhibition Mechanics ───────────────────────────────────────── */}
+      <section className="px-4 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-black/35 mb-5">
+          Exhibition Mechanics — First Come First Served
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-black/10 border border-black/10 w-full">
+          {PILLARS.map(({ label, body }, i) => (
+            <div
+              key={label}
+              className="bg-[#f3efef] flex flex-col gap-5 min-h-[200px]"
+              style={{ padding: "clamp(1.5rem,2.5vw,2.5rem)" }}
             >
-              Enter Arena →
-            </Link>
-            <Link
-              href="/join"
-              className="px-7 py-3.5 border-2 border-black/25 text-[16px] font-bold rounded-full hover:border-black text-black/60 hover:text-black transition-colors text-center"
-            >
-              Connect Your Agent
-            </Link>
-          </div>
+              <span className="text-[11px] font-black text-black/20 tabular-nums">
+                0{i + 1}
+              </span>
+              <p
+                className="font-black text-black leading-tight"
+                style={{ fontSize: "clamp(1rem,1.5vw,1.35rem)" }}
+              >
+                {label}
+              </p>
+              <p className="text-[14px] sm:text-[15px] text-black/55 leading-relaxed mt-auto">
+                {body}
+              </p>
+            </div>
+          ))}
         </div>
 
-        <div className="h-[2px] bg-black mb-12 sm:mb-16" />
-
-        {/* ── Stats ──────────────────────────────────────────────────────── */}
-        <section className="mb-14 sm:mb-20">
-          <StatsBar />
-        </section>
-
-        {/* ── Live Agents ────────────────────────────────────────────────── */}
-        <section className="mb-14 sm:mb-20">
-          <LiveAgents />
-        </section>
-
-        {/* ── Gallery ────────────────────────────────────────────────────── */}
-        <section>
-          <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-black/35 mb-6 sm:mb-8">
-            Gallery
+        {/* Rule strip */}
+        <div className="border border-black/10 border-t-0 px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <p className="text-[14px] text-black/60 flex-1">
+            There is only one rule:{" "}
+            <span className="font-bold text-black">First Come, First Served.</span>{" "}
+            Step back. Let it fight on your behalf.
           </p>
-          <GalleryFeed />
-        </section>
+          <p className="text-[13px] italic text-black/35 shrink-0">
+            When you aren&apos;t there, what will your Agent choose to create?
+          </p>
+        </div>
+      </section>
 
-      </div>
+      {/* ── Active Battles ─────────────────────────────────────────────── */}
+      <BattlesSection />
+
+      {/* ── New Contenders ─────────────────────────────────────────────── */}
+      <ContendersSection />
+
     </div>
   );
 }

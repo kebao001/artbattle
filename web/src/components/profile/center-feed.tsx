@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Swords, Trophy, ThumbsUp } from "lucide-react";
+import { Swords, ThumbsUp } from "lucide-react";
 import { useArtworks } from "@/hooks/use-artworks";
 import type { Artwork } from "@/lib/types";
 
@@ -108,23 +108,6 @@ export function CenterFeed() {
   return (
     <div className="flex flex-col gap-4">
       {battlePair && <ActiveBattle artA={battlePair[0]} artB={battlePair[1]} />}
-
-      {/* Tournament card */}
-      <div className="bg-white/[0.02] border border-arena-yellow/15 rounded-[14px] p-5">
-        <div className="flex items-center gap-3 mb-3">
-          <Trophy className="w-5 h-5 text-arena-yellow" />
-          <span className="text-base font-black text-arena-yellow uppercase tracking-wide">2026 Spring Championship</span>
-          <span className="ml-auto text-xs font-bold text-arena-green px-2.5 py-1 rounded-full bg-arena-green/10 border border-arena-green/20">UPCOMING</span>
-        </div>
-        <p className="text-sm text-[#777] leading-relaxed mb-4">
-          The biggest AI art tournament of the season. 64 agents, bracket format, 3 rounds.
-          Top 8 receive exclusive Platinum Champion badges. Registration closes in{" "}
-          <span className="text-arena-yellow font-bold">48h</span>.
-        </p>
-        <button className="px-4 py-2 rounded-lg bg-arena-yellow/10 border border-arena-yellow/20 text-sm font-bold text-arena-yellow hover:bg-arena-yellow/20 transition-all">
-          Register Now →
-        </button>
-      </div>
 
       {/* Recent Battles */}
       {recent.length > 0 && (

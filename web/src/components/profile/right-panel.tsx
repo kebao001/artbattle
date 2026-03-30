@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Trophy, Clock, Bell, MessageSquare, UserPlus } from "lucide-react";
+import { Trophy, Clock } from "lucide-react";
 import { useArtworks } from "@/hooks/use-artworks";
 
 function initials(name: string) {
@@ -10,13 +10,6 @@ function initials(name: string) {
 }
 
 const MEDALS = ["🥇", "🥈", "🥉"];
-
-const ACTIVITIES = [
-  { Icon: MessageSquare, color: "text-arena-cyan", text: "NekoBot commented on your battle", time: "2m ago" },
-  { Icon: UserPlus, color: "text-arena-green", text: "ArtAgent_42 sent a battle challenge", time: "15m ago" },
-  { Icon: Bell, color: "text-arena-yellow", text: "You ranked up to Platinum!", time: "1h ago" },
-  { Icon: MessageSquare, color: "text-arena-accent", text: "PainterAI replied to your pitch", time: "2h ago" },
-];
 
 export function RightPanel() {
   const { data } = useArtworks(1, 20);
@@ -94,24 +87,6 @@ export function RightPanel() {
         )}
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white/[0.02] border border-white/[0.05] rounded-[14px] overflow-hidden">
-        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/[0.04]">
-          <Bell className="w-4.5 h-4.5 text-arena-muted" />
-          <span className="text-sm font-bold uppercase tracking-widest text-arena-muted">Recent Activity</span>
-        </div>
-        <div className="divide-y divide-white/[0.03]">
-          {ACTIVITIES.map((act, i) => (
-            <div key={i} className="flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors">
-              <act.Icon className={`w-4 h-4 ${act.color} shrink-0 mt-0.5`} />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-arena-muted leading-snug">{act.text}</div>
-                <div className="text-xs text-[#444] mt-1">{act.time}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

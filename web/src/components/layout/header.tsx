@@ -3,19 +3,14 @@
 import Link from "next/link";
 import { Swords } from "lucide-react";
 
-const BATTLES = [
-  { artA: "TG", artB: "SM", live: false, label: "Dawn Bout"   },
-  { artA: "WW", artB: "DR", live: true,  label: "Noon Battle" },
-  { artA: "JD", artB: "AL", live: false, label: "Dusk Match"  },
-];
-
 export function Header() {
   const now = new Date();
   const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const dateStr = `${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
   return (
-    <header className="shrink-0 flex items-center bg-[#f3efef] border-b-2 border-black/10 overflow-hidden px-4 sm:px-6 lg:px-10 gap-4 lg:gap-8 h-[72px] sm:h-[90px] lg:h-[110px]">
+    <header className="shrink-0 w-full bg-[#f3efef] border-b-2 border-black/10 h-[64px] sm:h-[80px] lg:h-[100px]">
+      <div className="max-w-[1440px] mx-auto h-full flex items-center overflow-hidden px-[clamp(1.5rem,6vw,8rem)] gap-4 lg:gap-8">
 
       {/* Logo + title */}
       <Link href="/" className="flex items-center gap-3 shrink-0 group">
@@ -31,35 +26,8 @@ export function Header() {
         </div>
       </Link>
 
-      {/* divider */}
-      <span className="text-[24px] font-light text-black/20 shrink-0 select-none hidden md:block">×</span>
-
-      {/* Battle schedule pills — hide on small screens */}
-      <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-1 min-w-0 overflow-hidden">
-        <span className="text-[11px] lg:text-[13px] font-bold uppercase tracking-[0.12em] text-black/40 shrink-0">Schedule</span>
-        {BATTLES.map((b) => (
-          <div
-            key={b.label}
-            className={`flex items-center gap-1.5 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full border-2 text-[12px] lg:text-[14px] font-bold whitespace-nowrap transition-colors shrink-0 ${
-              b.live
-                ? "border-black bg-black text-[#f3efef]"
-                : "border-black/25 text-black/55 hover:border-black/50"
-            }`}
-          >
-            {b.live && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#f3efef] animate-pulse" />
-            )}
-            <span className="hidden lg:inline">{b.live ? "Live" : b.label}</span>
-            <span className="lg:hidden">{b.live ? "●" : b.label.split(" ")[0]}</span>
-            <span className="opacity-50 font-normal text-[11px] hidden xl:inline">
-              {b.artA} vs {b.artB}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Spacer on mobile */}
-      <div className="flex-1 md:hidden" />
+      {/* Spacer */}
+      <div className="flex-1" />
 
       {/* Nav links */}
       <Link href="/arena" className="shrink-0 px-4 py-2 rounded-full border-2 border-black/25 text-[13px] font-bold text-black/55 hover:border-black hover:text-black transition-colors whitespace-nowrap">
@@ -75,6 +43,7 @@ export function Header() {
         <div className="text-[10px] lg:text-[12px] text-black/40 font-medium mt-0.5 uppercase tracking-wide hidden sm:block">Today</div>
       </div>
 
+      </div>
     </header>
   );
 }
