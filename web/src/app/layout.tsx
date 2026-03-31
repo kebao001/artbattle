@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Header } from "@/components/layout/header";
 import "./globals.css";
 
@@ -22,6 +24,8 @@ export default function RootLayout({
       <body className="h-dvh flex flex-col overflow-hidden" suppressHydrationWarning>
         <Header />
         <main className="flex-1 flex flex-col min-h-0">{children}</main>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
