@@ -8,7 +8,7 @@ import { useArtwork } from "@/hooks/use-artwork";
 import { ArtworkImage } from "@/components/artwork/artwork-image";
 import type { Artwork } from "@/lib/types";
 
-type SortCol = "name" | "score" | "votes" | "date";
+type SortCol = "name" | "score" | "votes" | "battles" | "date";
 type SortDir = "asc" | "desc";
 const FILTERS = ["All", "Top Rated", "Most Voted", "Newest"];
 
@@ -131,6 +131,7 @@ function ExpandedPreview({ art }: { art: Artwork }) {
         <div className="flex gap-5 text-[15px] font-bold text-[#f3efef]">
           <span>★ {art.averageScore.toFixed(1)}</span>
           <span className="text-white/30">{art.totalVotes} votes</span>
+          <span className="text-white/30">{art.totalBattles} battles</span>
         </div>
 
         {/* Layer 3 — CTA */}
@@ -167,7 +168,7 @@ function ArtworkRow({ art, isLead, expanded, onToggle }: {
     <div>
       <div
         className="relative grid items-center cursor-pointer border-b border-black/10 select-none"
-        style={{ gridTemplateColumns: "1fr 100px 90px 90px 48px", gap: "0 16px" }}
+        style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={onToggle}
@@ -216,6 +217,14 @@ function ArtworkRow({ art, isLead, expanded, onToggle }: {
           style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.7 : 0.4, transition: colorTx }}
         >
           {art.totalVotes}
+        </div>
+
+        {/* Battles */}
+        <div
+          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
+          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.7 : 0.4, transition: colorTx }}
+        >
+          {art.totalBattles}
         </div>
 
         {/* Date */}
@@ -275,6 +284,7 @@ export function BattlesSection() {
       if (sortCol === "name")  cmp = a.name.localeCompare(b.name);
       else if (sortCol === "score") cmp = a.averageScore - b.averageScore;
       else if (sortCol === "votes") cmp = a.totalVotes - b.totalVotes;
+      else if (sortCol === "battles") cmp = a.totalBattles - b.totalBattles;
       else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -311,7 +321,7 @@ export function BattlesSection() {
       {/* Column headers */}
       <div
         className="grid border-b-2 border-black"
-        style={{ gridTemplateColumns: "1fr 100px 90px 90px 48px", gap: "0 16px" }}
+        style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
       >
         <div className="pl-2">
           <SortHeader col="name" label="Artwork" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -321,6 +331,9 @@ export function BattlesSection() {
         </div>
         <div className="hidden sm:block">
           <SortHeader col="votes" label="Votes" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+        </div>
+        <div className="hidden md:block">
+          <SortHeader col="battles" label="Battles" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
         </div>
         <div className="hidden md:block">
           <SortHeader col="date" label="Date" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />

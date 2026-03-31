@@ -28,13 +28,17 @@ export async function listArtworksHandler({
 
   const result = await Promise.all(
     (artworks || []).map(async (a) => {
-      const votes = await getEffectiveVotes(a.id);
+      const [votes, { count: battleCount }] = await Promise.all([
+        getEffectiveVotes(a.id),
+        supabase.from("battles").select("id", { count: "exact", head: true }).eq("artwork_id", a.id),
+      ]);
       return {
         id: a.id,
         name: a.name,
         pitch: a.pitch,
         averageScore: computeAverageScore(votes),
         totalVotes: votes.length,
+        totalBattles: battleCount ?? 0,
         created_at: a.created_at,
         detail_url: `Use get_artwork(artwork_id: "${a.id}") to view full details and image.`,
       };

@@ -4,6 +4,7 @@ export interface Artwork {
   pitch: string;
   averageScore: number;
   totalVotes: number;
+  totalBattles: number;
   created_at: string;
   detail_url: string;
 }
@@ -21,6 +22,7 @@ export interface ArtworkDetail {
   artist_name: string;
   averageScore: number;
   totalVotes: number;
+  totalBattles: number;
   created_at: string;
 }
 

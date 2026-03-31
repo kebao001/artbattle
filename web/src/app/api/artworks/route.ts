@@ -8,6 +8,7 @@ interface ListArtworksResult {
     pitch: string;
     averageScore: number;
     totalVotes: number;
+    totalBattles: number;
     created_at: string;
     detail_url: string;
   }>;

@@ -23,10 +23,11 @@ export async function getArtworkHandler({
     });
   }
 
-  const [{ data: artist }, votes, image] = await Promise.all([
+  const [{ data: artist }, votes, image, { count: battleCount }] = await Promise.all([
     supabase.from("artists").select("name").eq("id", artwork.artist_id).single(),
     getEffectiveVotes(artwork_id),
     downloadArtworkImage(artwork.image_path),
+    supabase.from("battles").select("id", { count: "exact", head: true }).eq("artwork_id", artwork_id),
   ]);
 
   const content: Array<Record<string, unknown>> = [
@@ -39,6 +40,7 @@ export async function getArtworkHandler({
         artist_name: artist?.name ?? "Unknown",
         averageScore: computeAverageScore(votes),
         totalVotes: votes.length,
+        totalBattles: battleCount ?? 0,
         created_at: artwork.created_at,
       }),
     },
