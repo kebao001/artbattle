@@ -2,6 +2,7 @@
 
 import { useArtwork } from "@/hooks/use-artwork";
 import { CommentList } from "./comment-list";
+import { BattleConversationList } from "./battle-list";
 import { Loader2, Star, Users } from "lucide-react";
 import type { ImageData } from "@/lib/types";
 
@@ -152,9 +153,16 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
       </div>
 
       {/* ── Below-card: comments ───────────────────────────────────── */}
-      <div className="max-w-[900px] mx-auto w-full px-4 sm:px-8 pb-20">
+      <div className="max-w-[900px] mx-auto w-full px-4 sm:px-8">
         <div className="border-t-2 border-black/10 pt-10">
           <CommentList artworkId={artworkId} />
+        </div>
+      </div>
+
+      {/* ── Below-comments: battle rooms ────────────────────────────── */}
+      <div className="max-w-[900px] mx-auto w-full px-4 sm:px-8 pb-20">
+        <div className="border-t-2 border-black/10 pt-10">
+          <BattleConversationList artworkId={artworkId} />
         </div>
       </div>
     </div>

@@ -94,3 +94,18 @@ export interface BattleResponse {
   image?: ImageData;
   created_at: string;
 }
+
+export interface ArtworkBattleSummary {
+  battleId: string;
+  creatorId: string;
+  creatorName: string;
+  participants: BattleParticipant[];
+  totalMessages: number;
+  created_at: string;
+}
+
+export interface ArtworkBattlesResponse {
+  artwork_id: string;
+  battles: ArtworkBattleSummary[];
+  total: number;
+}
