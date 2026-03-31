@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useArtworks } from "@/hooks/use-artworks";
@@ -8,13 +8,15 @@ import { useArtwork } from "@/hooks/use-artwork";
 import { ArtworkImage } from "@/components/artwork/artwork-image";
 import type { Artwork } from "@/lib/types";
 
-type SortCol = "name" | "score" | "votes" | "battles" | "date";
-type SortDir = "asc" | "desc";
-const FILTERS = ["All", "Top Rated", "Most Voted", "Newest"];
+type SortMode = "newest" | "most_votes" | "top_rated";
+type ColId = "name" | "score" | "votes" | "battles" | "date";
 
-function initials(name: string) {
-  return name.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-}
+const SORT_OPTIONS: { label: string; value: SortMode; col: ColId }[] = [
+  { label: "Top Rated",  value: "top_rated",  col: "score" },
+  { label: "Most Voted", value: "most_votes", col: "votes" },
+  { label: "Newest",     value: "newest",     col: "date"  },
+];
+
 function fmtDate(d: string) {
   const dt = new Date(d);
   return `${String(dt.getDate()).padStart(2, "0")}.${String(dt.getMonth() + 1).padStart(2, "0")}.${String(dt.getFullYear()).slice(2)}`;
@@ -55,34 +57,18 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-// ── Sort header ───────────────────────────────────────────────────────────────
-function SortHeader({ col, label, sortCol, sortDir, onSort }: {
-  col: SortCol; label: string; sortCol: SortCol; sortDir: SortDir;
-  onSort: (c: SortCol) => void;
-}) {
-  const active = sortCol === col;
+// ── Column header ─────────────────────────────────────────────────────────────
+function ColHeader({ label, highlighted }: { label: string; highlighted: boolean }) {
   return (
-    <button
-      className="flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-[0.1em] py-4 text-left whitespace-nowrap"
-      style={{ opacity: active ? 1 : 0.35, transition: "opacity 0.3s" }}
-      onClick={() => onSort(col)}
+    <span
+      className="text-[13px] font-bold uppercase tracking-[0.1em] py-4 block text-left whitespace-nowrap"
+      style={{ opacity: highlighted ? 1 : 0.35, transition: "opacity 0.3s" }}
     >
       {label}
-      <span
-        style={{
-          display: "inline-block",
-          opacity: active ? 1 : 0,
-          transform: active
-            ? sortDir === "asc" ? "rotate(180deg)" : "rotate(0deg)"
-            : "rotate(-90deg)",
-          transition: "opacity 0.45s, transform 0.45s",
-          fontSize: "10px",
-          lineHeight: 1,
-        }}
-      >
-        ▾
-      </span>
-    </button>
+      {highlighted && (
+        <span className="ml-1.5 inline-block text-[10px] leading-none">▾</span>
+      )}
+    </span>
   );
 }
 
@@ -268,31 +254,19 @@ function ArtworkRow({ art, isLead, expanded, onToggle }: {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function BattlesSection() {
-  const [filter, setFilter]       = useState("All");
-  const [sortCol, setSortCol]     = useState<SortCol>("votes");
-  const [sortDir, setSortDir]     = useState<SortDir>("desc");
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [expandedId, setExpanded] = useState<string | null>(null);
-  const { data } = useArtworks(1, 20);
+  const { data, isLoading, isValidating } = useArtworks(1, 20, sortMode);
 
-  const list = useMemo((): Artwork[] => {
-    let raw = [...(data?.artworks ?? [])];
-    if (filter === "Top Rated") return raw.sort((a, b) => b.averageScore - a.averageScore);
-    if (filter === "Most Voted") return raw.sort((a, b) => b.totalVotes - a.totalVotes);
-    if (filter === "Newest")    return raw.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return raw.sort((a, b) => {
-      let cmp = 0;
-      if (sortCol === "name")  cmp = a.name.localeCompare(b.name);
-      else if (sortCol === "score") cmp = a.averageScore - b.averageScore;
-      else if (sortCol === "votes") cmp = a.totalVotes - b.totalVotes;
-      else if (sortCol === "battles") cmp = a.totalBattles - b.totalBattles;
-      else cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  }, [data, filter, sortCol, sortDir]);
+  const list = data?.artworks ?? [];
+  const totalWorks = data?.total ?? 0;
+  const loading = isLoading || isValidating;
+  const activeCol = SORT_OPTIONS.find((o) => o.value === sortMode)!.col;
 
-  function handleSort(col: SortCol) {
-    if (sortCol === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortCol(col); setSortDir("desc"); }
+  function handleSortChange(mode: SortMode) {
+    if (mode === sortMode) return;
+    setExpanded(null);
+    setSortMode(mode);
   }
 
   function toggleExpand(id: string) {
@@ -309,11 +283,11 @@ export function BattlesSection() {
           Top Artwork for Gallery Presence
         </h2>
         <span className="text-[14px] font-bold text-black/35 uppercase tracking-wide shrink-0">
-          {list.length} works
+          {totalWorks} works
         </span>
         <div className="flex items-center gap-1 ml-auto flex-wrap justify-end">
-          {FILTERS.map((f) => (
-            <Pill key={f} label={f} active={filter === f} onClick={() => setFilter(f)} />
+          {SORT_OPTIONS.map((opt) => (
+            <Pill key={opt.value} label={opt.label} active={sortMode === opt.value} onClick={() => handleSortChange(opt.value)} />
           ))}
         </div>
       </div>
@@ -324,37 +298,45 @@ export function BattlesSection() {
         style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
       >
         <div className="pl-2">
-          <SortHeader col="name" label="Artwork" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <ColHeader label="Artwork" highlighted={false} />
         </div>
         <div className="hidden sm:block">
-          <SortHeader col="score" label="Score" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <ColHeader label="Score" highlighted={activeCol === "score"} />
         </div>
         <div className="hidden sm:block">
-          <SortHeader col="votes" label="Votes" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <ColHeader label="Votes" highlighted={activeCol === "votes"} />
         </div>
         <div className="hidden md:block">
-          <SortHeader col="battles" label="Battles" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <ColHeader label="Battles" highlighted={false} />
         </div>
         <div className="hidden md:block">
-          <SortHeader col="date" label="Date" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          <ColHeader label="Date" highlighted={activeCol === "date"} />
         </div>
         <div />
       </div>
 
       {/* Rows */}
-      {list.length === 0
+      {loading && list.length === 0
         ? Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-[70px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
           ))
-        : list.map((art, i) => (
-            <ArtworkRow
-              key={art.id}
-              art={art}
-              isLead={i === 0}
-              expanded={expandedId === art.id}
-              onToggle={() => toggleExpand(art.id)}
-            />
-          ))}
+        : (
+          <div className="relative">
+            {/* Dim overlay while revalidating with stale data visible */}
+            {loading && list.length > 0 && (
+              <div className="absolute inset-0 bg-white/60 z-20 pointer-events-none" style={{ transition: "opacity 0.2s" }} />
+            )}
+            {list.map((art, i) => (
+              <ArtworkRow
+                key={art.id}
+                art={art}
+                isLead={i === 0}
+                expanded={expandedId === art.id}
+                onToggle={() => toggleExpand(art.id)}
+              />
+            ))}
+          </div>
+        )}
     </div>
     </section>
   );

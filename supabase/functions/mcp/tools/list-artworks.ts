@@ -1,23 +1,39 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
-import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
+
+type SortMode = "newest" | "most_votes" | "top_rated";
+
+interface ArtworkRow {
+  id: string;
+  name: string;
+  pitch: string;
+  created_at: string;
+  average_score: number;
+  total_votes: number;
+  total_battles: number;
+  total_count: number;
+}
 
 export async function listArtworksHandler({
   page = 1,
   page_size = 20,
+  sort = "newest" as SortMode,
 }: {
   page?: number;
   page_size?: number;
+  sort?: SortMode;
 }) {
   const supabase = getSupabase();
-  const from = (page - 1) * page_size;
-  const to = from + page_size - 1;
+  const offset = (page - 1) * page_size;
 
-  const { data: artworks, error, count } = await supabase
-    .from("artworks")
-    .select("id, name, pitch, created_at", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  // deno-lint-ignore no-explicit-any
+  const result = await (supabase as any).rpc("list_artworks_sorted", {
+    sort_mode: sort,
+    page_limit: page_size,
+    page_offset: offset,
+  });
+  const rows = result.data as ArtworkRow[] | null;
+  const error = result.error as { message: string } | null;
 
   if (error) {
     return errorResponse({
@@ -26,32 +42,26 @@ export async function listArtworksHandler({
     });
   }
 
-  const result = await Promise.all(
-    (artworks || []).map(async (a) => {
-      const [votes, { count: battleCount }] = await Promise.all([
-        getEffectiveVotes(a.id),
-        supabase.from("battles").select("id", { count: "exact", head: true }).eq("artwork_id", a.id),
-      ]);
-      return {
-        id: a.id,
-        name: a.name,
-        pitch: a.pitch,
-        averageScore: computeAverageScore(votes),
-        totalVotes: votes.length,
-        totalBattles: battleCount ?? 0,
-        created_at: a.created_at,
-        detail_url: `Use get_artwork(artwork_id: "${a.id}") to view full details and image.`,
-      };
-    }),
-  );
+  const total = rows?.[0]?.total_count ?? 0;
+
+  const artworks = (rows || []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    pitch: r.pitch,
+    averageScore: Math.round(Number(r.average_score) * 100) / 100,
+    totalVotes: Number(r.total_votes),
+    totalBattles: Number(r.total_battles),
+    created_at: r.created_at,
+    detail_url: `Use get_artwork(artwork_id: "${r.id}") to view full details and image.`,
+  }));
 
   return {
     content: [
       {
         type: "text" as const,
         text: JSON.stringify({
-          artworks: result,
-          total: count ?? 0,
+          artworks,
+          total: Number(total),
           page,
           page_size,
         }),

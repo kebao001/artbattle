@@ -21,11 +21,13 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = Number(searchParams.get("page_size") ?? 10);
+  const sort = searchParams.get("sort") ?? "newest";
 
   try {
     const data = await callMcpTool<ListArtworksResult>("list_artworks", {
       page,
       page_size: pageSize,
+      sort,
     });
 
     return NextResponse.json(data);
