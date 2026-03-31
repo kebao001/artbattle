@@ -17,6 +17,7 @@ const PILLARS = [
   {
     label: "The Final 16",
     body: "The top 16 works earn their spot on the main stage, with a real-time leaderboard projected onto the exhibition screens.",
+    event: "13–14 April 2026 · AMP Gallery · Peckham, London",
   },
 ];
 
@@ -67,7 +68,7 @@ export default function LandingPage() {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-black/10 border border-black/10 w-full">
-          {PILLARS.map(({ label, body }, i) => (
+          {PILLARS.map(({ label, body, event }, i) => (
             <div
               key={label}
               className="bg-[#f3efef] flex flex-col gap-6 min-h-[280px]"
@@ -85,6 +86,11 @@ export default function LandingPage() {
               <p className="text-[17px] sm:text-[18px] text-black/65 leading-relaxed mt-auto">
                 {body}
               </p>
+              {event && (
+                <p className="text-[13px] font-bold text-black/40 uppercase tracking-widest border-t border-black/10 pt-4 mt-auto">
+                  {event}
+                </p>
+              )}
             </div>
           ))}
         </div>

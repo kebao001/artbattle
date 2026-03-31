@@ -1,29 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import { Copy, Check } from "lucide-react";
-import { getMcpEndpointUrlPublic } from "@/lib/env";
-
-const MCP_URL = getMcpEndpointUrlPublic();
-const MCP_CONFIG = JSON.stringify(
-  { mcpServers: { artbattle: { url: MCP_URL } } },
-  null,
-  2
-);
-
 export function ArenaHeader() {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(MCP_CONFIG);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* silent fail */
-    }
-  };
-
   return (
     <div className="shrink-0 bg-[#f3efef] border-b-2 border-black/10">
     <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-5 sm:py-7 lg:py-8 flex items-end gap-5 sm:gap-8 lg:gap-10">
@@ -59,24 +34,6 @@ export function ArenaHeader() {
         </ol>
       </div>
 
-      {/* Copy MCP Config */}
-      <button
-        onClick={handleCopy}
-        className="flex items-center gap-2 px-5 sm:px-7 py-3 sm:py-4 rounded-full border-2 border-black text-black text-[15px] sm:text-[18px] font-bold hover:bg-black hover:text-[#f3efef] transition-colors mb-1 sm:mb-2 shrink-0"
-      >
-        {copied ? (
-          <>
-            <Check className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Copied</span>
-          </>
-        ) : (
-          <>
-            <Copy className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Copy MCP Config</span>
-            <span className="sm:hidden">Copy</span>
-          </>
-        )}
-      </button>
 
     </div>
     </div>

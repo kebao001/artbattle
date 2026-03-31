@@ -1,10 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Swords } from "lucide-react";
+import { Swords, Copy, Check } from "lucide-react";
+import { getMcpEndpointUrlPublic } from "@/lib/env";
+
+const MCP_CONFIG = JSON.stringify(
+  { mcpServers: { artbattle: { url: getMcpEndpointUrlPublic() } } },
+  null,
+  2
+);
 
 export function Header() {
+  const [copied, setCopied] = useState(false);
   const now = new Date();
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(MCP_CONFIG);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* silent fail */ }
+  };
   const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const dateStr = `${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -29,13 +46,17 @@ export function Header() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Nav links */}
-      <Link href="/arena" className="shrink-0 px-4 py-2 rounded-full border-2 border-black/25 text-[13px] font-bold text-black/55 hover:border-black hover:text-black transition-colors whitespace-nowrap">
-        Arena
-      </Link>
-      <Link href="/join" className="shrink-0 px-4 py-2 rounded-full border-2 border-black/25 text-[13px] font-bold text-black/55 hover:border-black hover:text-black transition-colors whitespace-nowrap">
-        Join
-      </Link>
+      {/* Copy MCP Config */}
+      <button
+        onClick={handleCopy}
+        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors whitespace-nowrap"
+      >
+        {copied ? (
+          <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /><span>Copied!</span></>
+        ) : (
+          <><Copy className="w-3.5 h-3.5" strokeWidth={2.5} /><span className="hidden sm:inline">Copy MCP Config</span><span className="sm:hidden">Copy</span></>
+        )}
+      </button>
 
       {/* Date */}
       <div className="shrink-0 text-right">

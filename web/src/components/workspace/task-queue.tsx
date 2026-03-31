@@ -31,7 +31,8 @@ export function TaskQueue() {
 
   const completed = useMemo(() => {
     return (data?.artworks ?? [])
-      .filter((a) => a.totalVotes > 3)
+      .filter((a) => a.totalVotes > 0)
+      .sort((a, b) => b.totalVotes - a.totalVotes)
       .slice(0, 3);
   }, [data]);
 

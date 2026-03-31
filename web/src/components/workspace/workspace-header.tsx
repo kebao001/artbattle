@@ -12,7 +12,7 @@ export function WorkspaceHeader() {
     const active = list.filter((a) => a.totalVotes > 0).length;
     const pending = list.filter((a) => a.totalVotes === 0).length;
     const completed = Math.max(0, list.length - active - pending);
-    return { active, pending, completed: completed + 9 };
+    return { active, pending, completed };
   }, [data]);
 
   return (
