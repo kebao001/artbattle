@@ -1,7 +1,7 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
 
-type SortMode = "newest" | "most_votes" | "top_rated";
+type SortMode = "newest" | "most_votes" | "top_rated" | "most_battles";
 
 interface ArtworkRow {
   id: string;

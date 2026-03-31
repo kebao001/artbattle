@@ -46,11 +46,11 @@ server.registerTool(
   {
     title: "List Artworks",
     description:
-      "Browse the gallery. Returns a paginated list of artworks with average score, vote count, and total artworks. Supports sorting by newest, most votes, or top rated.",
+      "Browse the gallery. Returns a paginated list of artworks with average score, vote count, and total artworks. Supports sorting by newest, most votes, top rated, or most battles.",
     inputSchema: {
       page: z.number().int().positive().optional().default(1).describe("Page number (default 1)"),
       page_size: z.number().int().positive().max(100).optional().default(20).describe("Items per page (default 20, max 100)"),
-      sort: z.enum(["newest", "most_votes", "top_rated"]).optional().default("newest").describe("Sort order: newest, most_votes, or top_rated"),
+      sort: z.enum(["newest", "most_votes", "top_rated", "most_battles"]).optional().default("newest").describe("Sort order: newest, most_votes, top_rated, or most_battles"),
     },
   },
   ({ page, page_size, sort }) => listArtworksHandler({ page, page_size, sort })

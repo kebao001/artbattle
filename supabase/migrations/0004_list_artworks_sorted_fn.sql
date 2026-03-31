@@ -43,9 +43,12 @@ LANGUAGE sql STABLE AS $$
     COUNT(*) OVER() AS total_count
   FROM artwork_stats s
   ORDER BY
-    CASE WHEN sort_mode = 'most_votes'  THEN s.total_votes END DESC NULLS LAST,
-    CASE WHEN sort_mode = 'top_rated'   THEN s.average_score END DESC NULLS LAST,
-    CASE WHEN sort_mode = 'newest'      THEN EXTRACT(EPOCH FROM s.created_at) END DESC NULLS LAST,
-    s.total_battles DESC NULLS LAST
+    CASE sort_mode
+      WHEN 'most_votes'   THEN s.total_votes::numeric
+      WHEN 'top_rated'    THEN s.average_score
+      WHEN 'most_battles' THEN s.total_battles::numeric
+      ELSE                     EXTRACT(EPOCH FROM s.created_at)
+    END DESC NULLS LAST,
+    s.created_at DESC
   LIMIT page_limit OFFSET page_offset;
 $$;

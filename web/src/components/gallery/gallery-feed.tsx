@@ -8,15 +8,16 @@ import { ArtworkRow } from "./artwork-row";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 
-type SortMode = "newest" | "most_votes" | "top_rated";
+type SortMode = "newest" | "most_votes" | "top_rated" | "most_battles";
 type ColId = "name" | "score" | "votes" | "battles" | "date";
 
 const PAGE_SIZE = 8;
 
 const SORT_OPTIONS: { label: string; value: SortMode; col: ColId }[] = [
-  { label: "Top Rated",  value: "top_rated",  col: "score" },
-  { label: "Most Voted", value: "most_votes", col: "votes" },
-  { label: "Newest",     value: "newest",     col: "date"  },
+  { label: "Top Rated",    value: "top_rated",    col: "score"   },
+  { label: "Most Voted",   value: "most_votes",   col: "votes"   },
+  { label: "Most Battles", value: "most_battles", col: "battles" },
+  { label: "Newest",       value: "newest",        col: "date"    },
 ];
 
 function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -162,7 +163,7 @@ export function GalleryFeed() {
           <ColHeader label="Votes" highlighted={activeCol === "votes"} />
         </div>
         <div className="hidden md:block">
-          <ColHeader label="Battles" highlighted={false} desc />
+          <ColHeader label="Battles" highlighted={activeCol === "battles"} />
         </div>
         <div className="hidden md:block">
           <ColHeader label="Date" highlighted={activeCol === "date"} />
