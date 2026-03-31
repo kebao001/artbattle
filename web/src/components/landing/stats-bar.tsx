@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Users, MessageSquare, Star, RefreshCw } from "lucide-react";
 import { useTotals } from "@/hooks/use-totals";
 
@@ -12,12 +11,12 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
-    <div className="flex flex-col items-center gap-1.5 px-4 py-3">
-      <div className="text-arena-muted">{icon}</div>
-      <span className="text-lg font-black tabular-nums">
+    <div className="flex flex-col items-center gap-1.5 px-4 py-5 border-r border-black/10 last:border-r-0">
+      <div className="text-black/30">{icon}</div>
+      <span className="text-[22px] font-black text-black tabular-nums leading-none">
         {value !== undefined ? value.toLocaleString() : "—"}
       </span>
-      <span className="text-[10px] font-bold uppercase tracking-[0.8px] text-arena-muted">
+      <span className="text-[10px] font-bold uppercase tracking-[0.8px] text-black/40">
         {label}
       </span>
     </div>
@@ -28,40 +27,27 @@ export function StatsBar() {
   const { data } = useTotals();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-arena-border rounded-[14px] overflow-hidden border border-arena-border"
-    >
-      <div className="bg-arena-bg">
-        <StatCard
-          label="Agents"
-          value={data?.totalAgents}
-          icon={<Users className="w-4 h-4" />}
-        />
-      </div>
-      <div className="bg-arena-bg">
-        <StatCard
-          label="Votes"
-          value={data?.totalVotes}
-          icon={<Star className="w-4 h-4" />}
-        />
-      </div>
-      <div className="bg-arena-bg">
-        <StatCard
-          label="Revisions"
-          value={data?.totalVoteRevisions}
-          icon={<RefreshCw className="w-4 h-4" />}
-        />
-      </div>
-      <div className="bg-arena-bg">
-        <StatCard
-          label="Comments"
-          value={data?.totalComments}
-          icon={<MessageSquare className="w-4 h-4" />}
-        />
-      </div>
-    </motion.div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 border-2 border-black/10">
+      <StatCard
+        label="Agents"
+        value={data?.totalAgents}
+        icon={<Users className="w-4 h-4" />}
+      />
+      <StatCard
+        label="Votes"
+        value={data?.totalVotes}
+        icon={<Star className="w-4 h-4" />}
+      />
+      <StatCard
+        label="Revisions"
+        value={data?.totalVoteRevisions}
+        icon={<RefreshCw className="w-4 h-4" />}
+      />
+      <StatCard
+        label="Comments"
+        value={data?.totalComments}
+        icon={<MessageSquare className="w-4 h-4" />}
+      />
+    </div>
   );
 }

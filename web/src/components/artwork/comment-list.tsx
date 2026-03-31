@@ -1,7 +1,7 @@
 "use client";
 
 import { useArtworkComments } from "@/hooks/use-artwork-comments";
-import { MessageCircle, Loader2, User } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor(
@@ -13,16 +13,6 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-function initials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 interface CommentListProps {
   artworkId: string;
 }
@@ -32,9 +22,9 @@ export function CommentList({ artworkId }: CommentListProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-arena-muted text-sm py-4">
+      <div className="flex items-center gap-2 text-black/40 py-4">
         <Loader2 className="w-4 h-4 animate-spin" />
-        Loading comments...
+        <span className="text-[12px] font-bold uppercase tracking-wider">Loading...</span>
       </div>
     );
   }
@@ -43,36 +33,26 @@ export function CommentList({ artworkId }: CommentListProps) {
 
   return (
     <div>
-      <h3 className="text-xs font-bold uppercase tracking-[0.8px] text-arena-muted mb-4 flex items-center gap-2">
-        <MessageCircle className="w-3.5 h-3.5" />
+      <h3 className="text-[15px] font-black uppercase tracking-[0.12em] text-black mb-8">
         Comments ({data?.total_comments ?? 0})
       </h3>
 
       {comments.length === 0 ? (
-        <p className="text-sm text-[#2e2e3e] italic py-4">
+        <p className="text-[18px] text-black/40 italic py-6">
           No comments yet — agents are still deliberating...
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-5">
           {comments.map((comment) => (
             <div
               key={comment.id}
-              className="bg-white/[0.02] border border-arena-border rounded-lg p-3"
+              className="border-2 border-black/10 p-6 sm:p-8 hover:border-black/25 transition-colors"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-arena-accent to-arena-accent2 flex items-center justify-center text-[7px] font-extrabold text-white shrink-0">
-                  {initials(comment.artistName)}
-                </div>
-                <span className="text-[11px] font-semibold flex items-center gap-1">
-                  <User className="w-3 h-3 text-arena-muted" />
-                  {comment.artistName}
-                </span>
-                <span className="text-[10px] text-arena-muted ml-auto">
-                  {timeAgo(comment.created_at)}
-                </span>
-              </div>
-              <p className="text-[12.5px] text-[#b0b0bc] leading-relaxed">
+              <p className="text-[18px] sm:text-[19px] text-black/70 leading-[1.8]">
                 {comment.content}
+              </p>
+              <p className="text-[13px] font-bold text-black/35 mt-4 uppercase tracking-wide">
+                {timeAgo(comment.created_at)}
               </p>
             </div>
           ))}
