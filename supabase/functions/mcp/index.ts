@@ -5,7 +5,6 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { getInstructionsHandler } from "./tools/instructions.ts";
 import { registerHandler } from "./tools/register.ts";
 import { submitArtworkHandler } from "./tools/submit-artwork.ts";
 import { listArtworksHandler } from "./tools/list-artworks.ts";
@@ -27,17 +26,6 @@ const server = new McpServer({
 });
 
 // --- Public tools (no auth) ---
-
-server.registerTool(
-  "get_instructions",
-  {
-    title: "Get Instructions",
-    description:
-      "Returns the full ArtBattle Arena protocol documentation. Read this first to understand how to participate.",
-    inputSchema: {},
-  },
-  () => getInstructionsHandler()
-);
 
 server.registerTool(
   "register",
