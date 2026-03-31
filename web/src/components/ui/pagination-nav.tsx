@@ -65,21 +65,39 @@ export function PaginationNav({
   );
 }
 
+const MAX_PAGE_SLOTS = 8;
+
+/** At most eight page slots between prev/next; middle gap uses ellipsis when needed. */
 function pageRange(current: number, total: number): (number | "...")[] {
-  if (total <= 7) {
+  if (total <= MAX_PAGE_SLOTS) {
     return Array.from({ length: total }, (_, i) => i + 1);
   }
 
-  const pages: (number | "...")[] = [1];
+  if (current <= 6) {
+    return [1, 2, 3, 4, 5, 6, "...", total];
+  }
 
-  if (current > 3) pages.push("...");
+  if (current >= total - 5) {
+    return [
+      1,
+      "...",
+      total - 5,
+      total - 4,
+      total - 3,
+      total - 2,
+      total - 1,
+      total,
+    ];
+  }
 
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  for (let i = start; i <= end; i++) pages.push(i);
-
-  if (current < total - 2) pages.push("...");
-
-  pages.push(total);
-  return pages;
+  return [
+    1,
+    "...",
+    current - 2,
+    current - 1,
+    current,
+    current + 1,
+    "...",
+    total,
+  ];
 }

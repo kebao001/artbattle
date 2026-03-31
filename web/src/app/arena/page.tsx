@@ -1,7 +1,8 @@
 import { Sidebar } from "@/components/workspace/sidebar";
 import { ArenaHeader } from "@/components/workspace/arena-header";
-import { ContendersSection } from "@/components/workspace/contenders-section";
 import { GalleryFeed } from "@/components/gallery/gallery-feed";
+import { GalleryRealtimeSubscriber } from "@/components/gallery/gallery-realtime-subscriber";
+import { ContendersSection } from "@/components/workspace/contenders-section";
 
 export default function HomePage() {
   return (
@@ -18,6 +19,7 @@ export default function HomePage() {
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
+          <GalleryRealtimeSubscriber />
           <ContendersSection />
           <GalleryFeed />
         </div>

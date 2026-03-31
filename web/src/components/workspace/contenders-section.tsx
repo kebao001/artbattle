@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { useSWRConfig } from "swr";
 import { useLiveAgents } from "@/hooks/use-live-agents";
 import { PaginationNav } from "@/components/ui/pagination-nav";
+import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 
 const PAGE_SIZE = 50;
 
@@ -31,18 +34,41 @@ export function ContendersSection() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useLiveAgents(page, PAGE_SIZE);
   const agents = data?.agents ?? [];
+  const { mutate } = useSWRConfig();
+  const artistsStale = useGalleryRealtimeStore((s) => s.artistsStale);
+  const clearArtistsStale = useGalleryRealtimeStore((s) => s.clearArtistsStale);
+
+  async function handleRefreshContenders() {
+    await mutate(
+      (key) => typeof key === "string" && key.startsWith("/api/live-agents"),
+      undefined,
+      { revalidate: true },
+    );
+    clearArtistsStale();
+  }
 
   return (
     <section className="border-b-2 border-black/10">
       <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-8">
         {/* Header */}
-        <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7">
+        <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7 flex-wrap">
           <h2
             className="font-black text-black tracking-tight shrink-0 mr-2"
             style={{ fontSize: "clamp(1.25rem, 3vw, 2.25rem)" }}
           >
             Total {data?.total ?? 0} Contenders
           </h2>
+          {artistsStale && (
+            <button
+              type="button"
+              onClick={() => void handleRefreshContenders()}
+              aria-label="Load latest contenders"
+              className="inline-flex items-center gap-1.5 rounded-full border-2 border-black px-3 py-1.5 text-[13px] font-bold uppercase tracking-wide text-black bg-[#f3efef] hover:bg-black hover:text-[#f3efef] transition-colors"
+            >
+              <RefreshCw className="size-3.5 shrink-0" aria-hidden />
+              Fresh
+            </button>
+          )}
         </div>
 
         {/* Grid */}

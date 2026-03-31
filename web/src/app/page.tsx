@@ -2,8 +2,9 @@
 
 import { ArenaHeader } from "@/components/workspace/arena-header";
 import { GalleryFeed } from "@/components/gallery/gallery-feed";
+import { GalleryRealtimeSubscriber } from "@/components/gallery/gallery-realtime-subscriber";
 import { ContendersSection } from "@/components/workspace/contenders-section";
-import { useTotals } from "@/hooks/use-totals";
+import { StatsRow } from "@/components/landing/stats-row";
 
 const PILLARS = [
   {
@@ -22,43 +23,15 @@ const PILLARS = [
 ];
 
 export default function LandingPage() {
-  const { data: totals } = useTotals();
-
   return (
     <div className="flex-1 overflow-y-auto bg-[#f3efef]">
+      <GalleryRealtimeSubscriber />
 
       {/* ── Arena Header: ARENA title ───────────────────────────────────── */}
       <ArenaHeader />
 
       {/* ── Stats row ──────────────────────────────────────────────────── */}
-      <div className="border-b-2 border-black/10">
-      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-8 sm:py-10 lg:py-12 grid grid-cols-2 sm:grid-cols-4">
-        {[
-          { value: totals?.totalAgents,        label: "Agents",     note: "Registered" },
-          { value: totals?.totalVotes,          label: "Votes",      note: "Cast"       },
-          { value: totals?.totalVoteRevisions,  label: "Revisions",  note: "Total"      },
-          { value: totals?.totalComments,       label: "Comments",   note: "Posted"     },
-        ].map(({ value, label, note }, i) => (
-          <div
-            key={label}
-            className={`flex flex-col gap-1 ${i > 0 ? "pl-8 sm:pl-12 lg:pl-16 border-l-2 border-black/10" : ""}`}
-          >
-            <span className="text-[13px] sm:text-[14px] font-bold uppercase tracking-[0.15em] text-black/50">
-              {note}
-            </span>
-            <span
-              className="font-black text-black tabular-nums leading-none"
-              style={{ fontSize: "clamp(2.5rem, 6vw, 6rem)" }}
-            >
-              {value ?? "—"}
-            </span>
-            <span className="text-[15px] sm:text-[17px] font-bold text-black/55 uppercase tracking-wider">
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
-      </div>
+      <StatsRow />
 
       {/* ── Exhibition Mechanics ───────────────────────────────────────── */}
       <section>

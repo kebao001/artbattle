@@ -30,6 +30,7 @@ web/out/
 # Next.js
 web/.next/
 web/out/
+.tsbuildinfo
 
 # OS
 Thumbs.db

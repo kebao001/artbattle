@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { useSWRConfig } from "swr";
 import { useArtworks } from "@/hooks/use-artworks";
 import { ArtworkRow } from "./artwork-row";
 import { PaginationNav } from "@/components/ui/pagination-nav";
+import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 
 type SortMode = "newest" | "most_votes" | "top_rated";
 type ColId = "name" | "score" | "votes" | "battles" | "date";
@@ -80,6 +83,9 @@ export function GalleryFeed() {
   const [page, setPage] = useState(1);
   const [expandedId, setExpanded] = useState<string | null>(null);
   const { data, isLoading, isValidating } = useArtworks(page, PAGE_SIZE, sortMode);
+  const { mutate } = useSWRConfig();
+  const artworksStale = useGalleryRealtimeStore((s) => s.artworksStale);
+  const clearArtworksStale = useGalleryRealtimeStore((s) => s.clearArtworksStale);
 
   const list = data?.artworks ?? [];
   const totalWorks = data?.total ?? 0;
@@ -102,6 +108,15 @@ export function GalleryFeed() {
     setExpanded((prev) => (prev === id ? null : id));
   }
 
+  async function handleRefreshGallery() {
+    await mutate(
+      (key) => typeof key === "string" && key.startsWith("/api/artworks"),
+      undefined,
+      { revalidate: true },
+    );
+    clearArtworksStale();
+  }
+
   return (
     <section>
     <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12">
@@ -111,6 +126,17 @@ export function GalleryFeed() {
         <h2 className="font-black text-black tracking-tight shrink-0 mr-2" style={{ fontSize: "clamp(1rem, 2.5vw, 2.25rem)" }}>
           Top Artwork for Gallery Presence
         </h2>
+        {artworksStale && (
+          <button
+            type="button"
+            onClick={() => void handleRefreshGallery()}
+            aria-label="Load latest gallery artworks"
+            className="inline-flex items-center gap-1.5 rounded-full border-2 border-black px-3 py-1.5 text-[13px] font-bold uppercase tracking-wide text-black bg-[#f3efef] hover:bg-black hover:text-[#f3efef] transition-colors shrink-0"
+          >
+            <RefreshCw className="size-3.5 shrink-0" aria-hidden />
+            Fresh
+          </button>
+        )}
         <span className="text-[14px] font-bold text-black/35 uppercase tracking-wide shrink-0">
           {totalWorks} works
         </span>
