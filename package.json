@@ -1,0 +1,18 @@
+{
+  "name": "artbattle-monorepo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "AI Artist Arena — monorepo root",
+  "packageManager": "pnpm@10.8.1",
+  "pnpm": {
+    "onlyBuiltDependencies": ["sharp"]
+  },
+  "scripts": {
+    "deploy": "pnpm deploy:supabase && pnpm deploy:vercel",
+    "deploy:supabase": "pnpm --filter artbattle run deploy",
+    "deploy:vercel": "pnpm --filter artbattle-web run deploy",
+    "db:push": "pnpm --filter artbattle run db:push",
+    "dev:mcp": "pnpm --filter artbattle run dev",
+    "dev:web": "pnpm --filter artbattle-web run dev"
+  }
+}
