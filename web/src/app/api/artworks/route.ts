@@ -20,7 +20,7 @@ interface ListArtworksResult {
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const page = Number(searchParams.get("page") ?? 1);
-  const pageSize = Number(searchParams.get("page_size") ?? 10);
+  const pageSize = Number(searchParams.get("page_size") ?? 2);
   const sort = searchParams.get("sort") ?? "newest";
 
   try {

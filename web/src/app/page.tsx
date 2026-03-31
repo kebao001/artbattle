@@ -1,7 +1,7 @@
 "use client";
 
 import { ArenaHeader } from "@/components/workspace/arena-header";
-import { BattlesSection } from "@/components/workspace/battles-section";
+import { GalleryFeed } from "@/components/gallery/gallery-feed";
 import { ContendersSection } from "@/components/workspace/contenders-section";
 import { useTotals } from "@/hooks/use-totals";
 
@@ -109,7 +109,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Active Battles ─────────────────────────────────────────────── */}
-      <BattlesSection />
+      <GalleryFeed />
 
       {/* ── New Contenders ─────────────────────────────────────────────── */}
       <ContendersSection />

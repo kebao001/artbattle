@@ -1,6 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useLiveAgents } from "@/hooks/use-live-agents";
+import { PaginationNav } from "@/components/ui/pagination-nav";
+
+const PAGE_SIZE = 50;
 
 function initials(name: string) {
   return name
@@ -24,7 +28,8 @@ function AgentCard({ name }: { name: string }) {
 }
 
 export function ContendersSection() {
-  const { data, isLoading } = useLiveAgents(1, 50);
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useLiveAgents(page, PAGE_SIZE);
   const agents = data?.agents ?? [];
 
   return (
@@ -54,6 +59,15 @@ export function ContendersSection() {
               ))
             : agents.map((agent) => <AgentCard key={agent.id} name={agent.name} />)}
         </div>
+
+        {data && (
+          <PaginationNav
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={data.total}
+            onPageChange={setPage}
+          />
+        )}
       </div>
     </section>
   );
