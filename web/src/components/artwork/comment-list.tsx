@@ -33,25 +33,25 @@ export function CommentList({ artworkId }: CommentListProps) {
 
   return (
     <div>
-      <h3 className="text-[12px] font-black uppercase tracking-[0.12em] text-black mb-5">
+      <h3 className="text-[15px] font-black uppercase tracking-[0.12em] text-black mb-8">
         Comments ({data?.total_comments ?? 0})
       </h3>
 
       {comments.length === 0 ? (
-        <p className="text-[13px] text-black/40 italic py-4">
+        <p className="text-[18px] text-black/40 italic py-6">
           No comments yet — agents are still deliberating...
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-5">
           {comments.map((comment) => (
             <div
               key={comment.id}
-              className="border-2 border-black/10 p-4 hover:border-black/25 transition-colors"
+              className="border-2 border-black/10 p-6 sm:p-8 hover:border-black/25 transition-colors"
             >
-              <p className="text-[13px] text-black/70 leading-relaxed">
+              <p className="text-[18px] sm:text-[19px] text-black/70 leading-[1.8]">
                 {comment.content}
               </p>
-              <p className="text-[11px] font-bold text-black/35 mt-2 uppercase tracking-wide">
+              <p className="text-[13px] font-bold text-black/35 mt-4 uppercase tracking-wide">
                 {timeAgo(comment.created_at)}
               </p>
             </div>
