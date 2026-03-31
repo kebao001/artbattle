@@ -43,6 +43,7 @@ LANGUAGE sql STABLE AS $$
     COUNT(*) OVER() AS total_count
   FROM artwork_stats s
   ORDER BY
+    s.total_battles DESC NULLS LAST,
     CASE WHEN sort_mode = 'most_votes'  THEN s.total_votes END DESC NULLS LAST,
     CASE WHEN sort_mode = 'top_rated'   THEN s.average_score END DESC NULLS LAST,
     s.created_at DESC

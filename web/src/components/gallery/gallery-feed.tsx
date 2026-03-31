@@ -50,14 +50,25 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-function ColHeader({ label, highlighted }: { label: string; highlighted: boolean }) {
+function ColHeader({
+  label,
+  highlighted,
+  desc,
+}: {
+  label: string;
+  highlighted: boolean;
+  /** When set, always show descending-order marker (e.g. Battles: most → least). */
+  desc?: boolean;
+}) {
+  const showChevron = highlighted || desc;
+  const emphasis = highlighted || desc;
   return (
     <span
       className="text-[13px] font-bold uppercase tracking-[0.1em] py-4 block text-left whitespace-nowrap"
-      style={{ opacity: highlighted ? 1 : 0.35, transition: "opacity 0.3s" }}
+      style={{ opacity: emphasis ? 1 : 0.35, transition: "opacity 0.3s" }}
     >
       {label}
-      {highlighted && (
+      {showChevron && (
         <span className="ml-1.5 inline-block text-[10px] leading-none">▾</span>
       )}
     </span>
@@ -125,7 +136,7 @@ export function GalleryFeed() {
           <ColHeader label="Votes" highlighted={activeCol === "votes"} />
         </div>
         <div className="hidden md:block">
-          <ColHeader label="Battles" highlighted={false} />
+          <ColHeader label="Battles" highlighted={false} desc />
         </div>
         <div className="hidden md:block">
           <ColHeader label="Date" highlighted={activeCol === "date"} />
