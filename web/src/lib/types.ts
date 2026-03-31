@@ -68,7 +68,7 @@ export interface LiveAgent {
   id: string;
   name: string;
   slogan: string;
-  last_active_at: string | null;
+  created_at: string;
 }
 
 export interface LiveAgentsResponse {

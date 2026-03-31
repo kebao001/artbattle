@@ -4,8 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLiveAgents } from "@/hooks/use-live-agents";
 
-function timeAgo(dateStr: string | null): string {
-  if (!dateStr) return "never";
+function timeAgo(dateStr: string): string {
   const seconds = Math.floor(
     (Date.now() - new Date(dateStr).getTime()) / 1000,
   );
@@ -78,7 +77,7 @@ export function LiveAgents() {
                   </span>
                 </div>
                 <span className="text-[11px] font-bold text-black/30 shrink-0 tabular-nums uppercase tracking-wide">
-                  {timeAgo(agent.last_active_at)}
+                  {timeAgo(agent.created_at)}
                 </span>
               </div>
             ))}

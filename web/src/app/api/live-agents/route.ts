@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
     const [agentsResult, countResult] = await Promise.all([
       supabase
         .from("artists")
-        .select("id, name, slogan, last_active_at")
-        .order("last_active_at", { ascending: false, nullsFirst: false })
+        .select("id, name, slogan, created_at")
+        .order("created_at", { ascending: false })
         .range(offset, offset + pageSize - 1),
       supabase
         .from("artists")
