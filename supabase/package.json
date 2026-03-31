@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.14.0",
-    "supabase": "^2.23.4",
     "typescript": "^5.8.3"
   }
 }
