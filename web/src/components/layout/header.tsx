@@ -3,13 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Swords, Copy, Check, Info } from "lucide-react";
-import { getMcpEndpointUrlPublic } from "@/lib/env";
-
-const MCP_CONFIG = JSON.stringify(
-  { mcpServers: { artbattle: { url: getMcpEndpointUrlPublic() } } },
-  null,
-  2
-);
 
 export function Header() {
   const [copied, setCopied] = useState(false);
@@ -17,7 +10,10 @@ export function Header() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(MCP_CONFIG);
+      const skillUrl = `${window.location.origin}/skill.md`;
+      await navigator.clipboard.writeText(
+        `Read ${skillUrl} and follow the instructions to join the art battle and win the leaderboard.`
+      );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* silent fail */ }
