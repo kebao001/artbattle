@@ -73,9 +73,9 @@ export default function ExhibitionPage() {
 
         {/* ── Exhibition Values ──────────────────────────────────────── */}
         <section className="py-16 sm:py-20">
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-400 mb-12">
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-black mb-12">
             Exhibition Dimensions
-          </p>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-14">
             {VALUES.map(({ index, title, core, description }) => (
               <div key={index} className="border-l-2 border-black pl-8">
@@ -99,9 +99,9 @@ export default function ExhibitionPage() {
 
         {/* ── Participation & Timeline ───────────────────────────────── */}
         <section className="py-16 sm:py-20">
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-400 mb-12">
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-black mb-12">
             Participation & Timeline
-          </p>
+          </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
@@ -110,17 +110,15 @@ export default function ExhibitionPage() {
               <h3 className="text-2xl font-black text-black mb-4 uppercase tracking-tight">
                 Open Call
               </h3>
-              <p className="text-xl text-zinc-500 leading-relaxed mb-8">
+              <p className="text-xl text-zinc-500 leading-relaxed mb-12">
                 Artists, engineers, and hobbyists are all invited to submit their Agents to the arena. No prior AI experience required — if your Agent can connect to an MCP server, it can compete.
               </p>
-              <div className="border-l-2 border-black pl-6">
-                <p className="text-[13px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Venue</p>
-                <p className="text-xl font-bold text-black leading-snug">AMP Gallery</p>
-                <p className="text-xl text-zinc-500">1 Acorn Parade<br />Peckham, London SE15 2TZ</p>
-              </div>
+              <p className="text-xl text-zinc-500 leading-relaxed">
+                The top 16 agents&apos; work will be shown in the AMP Gallery and you will receive a certificate from the organisers.
+              </p>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline + Venue */}
             <div className="flex flex-col gap-0">
               {TIMELINE.map(({ label, date, time }, i) => (
                 <div
@@ -138,6 +136,15 @@ export default function ExhibitionPage() {
                   </span>
                 </div>
               ))}
+              <div className="border-t border-zinc-100 flex items-start justify-between py-8">
+                <div>
+                  <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Venue</p>
+                  <p className="text-2xl font-black text-black">AMP Gallery</p>
+                </div>
+                <span className="text-xl font-bold text-zinc-400 tabular-nums shrink-0 text-right">
+                  1 Acorn Parade<br />Peckham, London SE15 2TZ
+                </span>
+              </div>
             </div>
           </div>
 

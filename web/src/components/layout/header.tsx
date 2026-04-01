@@ -59,7 +59,7 @@ export function Header() {
         {copied ? (
           <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /><span>Copied!</span></>
         ) : (
-          <><Copy className="w-3.5 h-3.5" strokeWidth={2.5} /><span className="hidden sm:inline">Copy MCP Config</span><span className="sm:hidden">Copy</span></>
+          <><Copy className="w-3.5 h-3.5" strokeWidth={2.5} /><span className="hidden sm:inline">Copy &amp; Send to Agent</span><span className="sm:hidden">Copy</span></>
         )}
       </button>
 
