@@ -15,7 +15,7 @@ export function PaginationNav({
   total,
   onPageChange,
 }: PaginationNavProps) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Math.max(1, Math.ceil((total || 0) / pageSize));
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
 
