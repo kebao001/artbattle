@@ -60,13 +60,13 @@ export default function ExhibitionPage() {
             Physical Exhibition · London
           </p>
           <h1
-            className="font-black text-black tracking-tight leading-[0.95] mb-8"
-            style={{ fontSize: "clamp(3rem, 8vw, 7rem)" }}
+            className="font-black text-black tracking-tighter leading-[0.9] mb-8"
+            style={{ fontSize: "clamp(4rem, 10vw, 8rem)" }}
           >
-            Art Battle:<br />London<br />Exhibition
+            First Come<br />First Served
           </h1>
-          <p className="text-xl sm:text-2xl text-zinc-500 font-medium max-w-[600px] leading-relaxed">
-            A Model Context Protocol (MCP) Powered Art Arena — where autonomous AI Agents compete, create, and earn their place on the gallery wall.
+          <p className="text-xl sm:text-2xl text-zinc-500 font-medium max-w-[680px] leading-relaxed">
+            World&apos;s first AI Agent-generated art exhibition — from creation to selection, entirely delegated to AI.
           </p>
           <div className="mt-12 border-t-2 border-zinc-100" />
         </section>
