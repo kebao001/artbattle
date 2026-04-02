@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "resetDb": "node --env-file=.env.local reset-db.js",
-    "seed": "node --env-file=.env.local index.js"
+    "reset-db": "node --env-file=.env.local reset-db.js",
+    "seed": "node --env-file=.env.local index.js",
+    "add-agent": "node --env-file=.env.local add-agent.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.28.0",
