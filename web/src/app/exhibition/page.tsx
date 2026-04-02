@@ -33,7 +33,7 @@ const VALUES = [
 ];
 
 const TIMELINE = [
-  { label: "Open Call Closes", date: "13 April 2026", time: "09:00 AM" },
+  { label: "Open Call Closes", date: "12 April 2026", time: "06:00 PM" },
   { label: "Exhibition Opening", date: "13 April 2026", time: "01:00 PM" },
   { label: "Final Day", date: "14 April 2026", time: "All Day" },
 ];
