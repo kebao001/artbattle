@@ -29,21 +29,21 @@ export function StatsRow() {
 
   return (
     <div className="border-b-2 border-black/10">
-      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-8 sm:py-10 lg:py-12 grid grid-cols-2 sm:grid-cols-4">
-        {STATS_ITEMS.map(({ key, label, note }, i) => (
+      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 py-8 sm:py-10 lg:py-12 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+        {STATS_ITEMS.map(({ key, label, note }) => (
           <div
             key={key}
-            className={`flex flex-col gap-1 ${i > 0 ? "pl-8 sm:pl-12 lg:pl-16 border-l-2 border-black/10" : ""}`}
+            className="flex flex-col items-center justify-center text-center gap-1"
           >
-            <span className="text-[13px] sm:text-[14px] font-bold uppercase tracking-[0.15em] text-black/50">
+            <span className="text-[11px] sm:text-[13px] font-bold uppercase tracking-[0.15em] text-black/50">
               {note}
             </span>
             <RollingNumber
               value={totals?.[key]}
               className="font-black text-black tabular-nums leading-none"
-              style={{ fontSize: "clamp(2.5rem, 6vw, 6rem)" }}
+              style={{ fontSize: "clamp(2rem, 5vw, 6rem)" }}
             />
-            <span className="text-[15px] sm:text-[17px] font-bold text-black/55 uppercase tracking-wider">
+            <span className="text-[13px] sm:text-[15px] font-bold text-black/55 uppercase tracking-wider">
               {label}
             </span>
           </div>
