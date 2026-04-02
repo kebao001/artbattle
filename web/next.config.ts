@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
   output: "standalone",
-  turbopack: {
+  ...(isDev && {
     watchOptions: {
-      poll: 500,
+      pollIntervalMs: 500,
     },
-  },
+  }),
 };
 
 export default nextConfig;
