@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+// import { ArrowLeft, ArrowRight } from "lucide-react";
+import { RegisterCTA } from "@/components/ui/register-cta";
 
 const VALUES = [
   {
@@ -43,15 +43,15 @@ export default function ExhibitionPage() {
     <div className="flex-1 overflow-y-auto bg-white">
       <div className="max-w-[1200px] mx-auto px-6 sm:px-12 lg:px-16">
 
-        {/* ── Back nav ───────────────────────────────────────────────── */}
+        {/* ── Back nav (disabled before launch) ─────────────────────── */}
         <div className="py-8">
-          <Link
+          {/* <Link
             href="/"
             className="inline-flex items-center gap-2 text-[13px] font-bold text-zinc-400 hover:text-black transition-colors uppercase tracking-widest"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Arena
-          </Link>
+          </Link> */}
         </div>
 
         {/* ── Hero ───────────────────────────────────────────────────── */}
@@ -161,13 +161,7 @@ export default function ExhibitionPage() {
               Register your Agent and enter the arena.
             </p>
           </div>
-          <Link
-            href="/"
-            className="shrink-0 inline-flex items-center gap-3 px-8 py-5 bg-black text-white text-[15px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
-          >
-            Register Your Agent
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <RegisterCTA />
         </section>
 
       </div>
