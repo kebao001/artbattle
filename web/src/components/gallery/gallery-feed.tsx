@@ -24,15 +24,19 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   return (
     <button
       onClick={onClick}
-      className="relative overflow-hidden rounded-full border-2 border-black px-5 py-2.5 shrink-0"
+      className="group relative overflow-hidden rounded-full border-2 border-black px-4 py-1.5 shrink-0 transition-transform duration-75 active:scale-95"
       style={{
         backgroundColor: active ? "#000" : "transparent",
         transition: "background-color 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)",
       }}
     >
+      {/* Press overlay — fills black on tap for inactive pills */}
+      {!active && (
+        <span className="absolute inset-0 rounded-full bg-black opacity-0 group-active:opacity-100 transition-opacity duration-75 pointer-events-none" />
+      )}
       <span className="relative block overflow-hidden" style={{ lineHeight: "1.4em" }}>
         <span
-          className="block text-black font-bold text-[15px] whitespace-nowrap"
+          className="block text-black font-bold text-[13px] whitespace-nowrap"
           style={{
             transform: active ? "translateY(100%)" : "translateY(0)",
             transition: "transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -41,7 +45,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
           {label}
         </span>
         <span
-          className="absolute inset-0 text-[#f3efef] font-bold text-[15px] whitespace-nowrap"
+          className="absolute inset-0 text-[#f3efef] font-bold text-[13px] whitespace-nowrap"
           style={{
             transform: active ? "translateY(0)" : "translateY(-100%)",
             transition: "transform 0.45s cubic-bezier(0.165, 0.84, 0.44, 1)",
@@ -80,7 +84,7 @@ function ColHeader({
 }
 
 export function GalleryFeed() {
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [sortMode, setSortMode] = useState<SortMode>("top_rated");
   const [page, setPage] = useState(1);
   const [expandedId, setExpanded] = useState<string | null>(null);
   const { data, isLoading, isValidating } = useArtworks(page, PAGE_SIZE, sortMode);
@@ -123,25 +127,29 @@ export function GalleryFeed() {
     <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12">
 
       {/* Header */}
-      <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-7 flex-wrap">
-        <h2 className="font-black text-black tracking-tight shrink-0 mr-2" style={{ fontSize: "clamp(1rem, 2.5vw, 2.25rem)" }}>
-          Top Artwork for Gallery Presence
-        </h2>
-        {artworksStale && (
-          <button
-            type="button"
-            onClick={() => void handleRefreshGallery()}
-            aria-label="Load latest gallery artworks"
-            className="inline-flex items-center gap-1.5 rounded-full border-2 border-black px-3 py-1.5 text-[13px] font-bold uppercase tracking-wide text-black bg-[#f3efef] hover:bg-black hover:text-[#f3efef] transition-colors shrink-0"
-          >
-            <RefreshCw className="size-3.5 shrink-0" aria-hidden />
-            Fresh
-          </button>
-        )}
-        <span className="text-[14px] font-bold text-black/35 uppercase tracking-wide shrink-0">
-          {totalWorks} works
-        </span>
-        <div className="flex items-center gap-1 ml-auto flex-wrap justify-end">
+      <div className="mb-5 sm:mb-7">
+        <div className="flex justify-between items-baseline mb-6">
+          <h2 className="font-bold text-black tracking-tight" style={{ fontSize: "clamp(1rem, 2.5vw, 2.25rem)" }}>
+            Top Artwork for Gallery Presence
+          </h2>
+          <div className="flex items-center gap-2 shrink-0 ml-4">
+            {artworksStale && (
+              <button
+                type="button"
+                onClick={() => void handleRefreshGallery()}
+                aria-label="Load latest gallery artworks"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-black px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black bg-[#f3efef] hover:bg-black hover:text-[#f3efef] transition-colors shrink-0"
+              >
+                <RefreshCw className="size-3 shrink-0" aria-hidden />
+                Fresh
+              </button>
+            )}
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
+              {totalWorks} works
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-4">
           {SORT_OPTIONS.map((opt) => (
             <Pill key={opt.value} label={opt.label} active={sortMode === opt.value} onClick={() => handleSortChange(opt.value)} />
           ))}

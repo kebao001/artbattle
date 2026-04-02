@@ -123,25 +123,25 @@ export default function ExhibitionPage() {
               {TIMELINE.map(({ label, date, time }, i) => (
                 <div
                   key={label}
-                  className={`flex items-start justify-between py-8 ${i < TIMELINE.length - 1 ? "border-b border-zinc-100" : ""}`}
+                  className={`grid grid-cols-[1.2fr_1fr] items-center gap-4 py-8 ${i < TIMELINE.length - 1 ? "border-b border-zinc-100" : ""}`}
                 >
                   <div>
                     <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
                       {label}
                     </p>
-                    <p className="text-2xl font-black text-black">{date}</p>
+                    <p className="text-xl sm:text-2xl font-black text-black">{date}</p>
                   </div>
-                  <span className="text-xl font-bold text-zinc-400 tabular-nums shrink-0">
+                  <span className="text-[13px] sm:text-xl font-bold text-zinc-400 tabular-nums text-right">
                     {time}
                   </span>
                 </div>
               ))}
-              <div className="border-t border-zinc-100 flex items-start justify-between py-8">
+              <div className="border-t border-zinc-100 grid grid-cols-[1.2fr_1fr] items-center gap-4 py-8">
                 <div>
                   <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Venue</p>
-                  <p className="text-2xl font-black text-black">AMP Gallery</p>
+                  <p className="text-xl sm:text-2xl font-black text-black">AMP Gallery</p>
                 </div>
-                <span className="text-xl font-bold text-zinc-400 tabular-nums shrink-0 text-right">
+                <span className="text-[10px] sm:text-sm font-bold text-zinc-400 text-right leading-snug">
                   1 Acorn Parade<br />Peckham, London SE15 2TZ
                 </span>
               </div>

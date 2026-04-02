@@ -38,3 +38,8 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+
+/* Remove default iOS tap highlight on all interactive elements */
+a, button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}

@@ -45,7 +45,7 @@ export function Header() {
       {/* Exhibition Info */}
       <Link
         href="/exhibition"
-        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors whitespace-nowrap"
+        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors active:scale-95 active:bg-black active:text-[#f3efef] duration-75 whitespace-nowrap"
       >
         <Info className="w-3.5 h-3.5" strokeWidth={2.5} />
         <span className="hidden sm:inline">Exhibition Info</span>
@@ -54,7 +54,7 @@ export function Header() {
       {/* Copy MCP Config */}
       <button
         onClick={handleCopy}
-        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors whitespace-nowrap"
+        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors active:scale-95 active:bg-black active:text-[#f3efef] duration-75 whitespace-nowrap"
       >
         {copied ? (
           <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /><span>Copied!</span></>
