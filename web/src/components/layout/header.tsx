@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Swords, Copy, Check, Info } from "lucide-react";
+import { useLaunchCountdown } from "@/hooks/use-launch-countdown";
 
 export function Header() {
   const [copied, setCopied] = useState(false);
+  const { isLaunched } = useLaunchCountdown();
   const now = new Date();
 
   const handleCopy = async () => {
@@ -26,7 +28,8 @@ export function Header() {
       <div className="max-w-[1800px] mx-auto h-full flex items-center overflow-hidden px-8 sm:px-12 lg:px-16 gap-4 lg:gap-8">
 
       {/* Logo + title */}
-      <Link href="/" className="flex items-center gap-3 shrink-0 group">
+      {/* <Link href="/" className="flex items-center gap-3 shrink-0 group"> */}
+      <div className="flex items-center gap-3 shrink-0">
         <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-black shrink-0">
           <Swords className="w-4 h-4 sm:w-5 sm:h-5 text-[#f3efef]" />
         </div>
@@ -37,7 +40,8 @@ export function Header() {
         <div className="leading-tight block sm:hidden">
           <div className="text-[15px] font-black tracking-tight text-black">ArtBattle</div>
         </div>
-      </Link>
+      </div>
+      {/* </Link> */}
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -53,8 +57,13 @@ export function Header() {
 
       {/* Copy MCP Config */}
       <button
-        onClick={handleCopy}
-        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors active:scale-95 active:bg-black active:text-[#f3efef] duration-75 whitespace-nowrap"
+        onClick={isLaunched ? handleCopy : undefined}
+        disabled={!isLaunched}
+        className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 text-[13px] font-bold whitespace-nowrap transition-colors duration-75 ${
+          isLaunched
+            ? "border-black text-black hover:bg-black hover:text-[#f3efef] active:scale-95 active:bg-black active:text-[#f3efef]"
+            : "border-black/25 text-black/30 cursor-not-allowed"
+        }`}
       >
         {copied ? (
           <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /><span>Copied!</span></>
