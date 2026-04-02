@@ -182,13 +182,39 @@ export function GalleryFeed() {
       {/* Rows */}
       {loading && list.length === 0
         ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
-            <div key={i} className="h-[70px] border-b border-black/10 bg-black/[0.015] animate-pulse" />
+            <div
+              key={i}
+              className="grid items-center border-b border-black/10 animate-pulse"
+              style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
+            >
+              {/* Name */}
+              <div className="py-5 pl-2">
+                <div className="h-[18px] bg-zinc-300 rounded-sm" style={{ width: `${55 + (i * 17) % 35}%` }} />
+              </div>
+              {/* Score */}
+              <div className="py-5 hidden sm:block">
+                <div className="h-[15px] w-12 bg-zinc-300 rounded-sm" />
+              </div>
+              {/* Votes */}
+              <div className="py-5 hidden sm:block">
+                <div className="h-[15px] w-8 bg-zinc-300 rounded-sm" />
+              </div>
+              {/* Battles */}
+              <div className="py-5 hidden md:block">
+                <div className="h-[15px] w-6 bg-zinc-300 rounded-sm" />
+              </div>
+              {/* Date */}
+              <div className="py-5 hidden md:block">
+                <div className="h-[15px] w-16 bg-zinc-300 rounded-sm" />
+              </div>
+              {/* Toggle */}
+              <div className="py-5 pr-2 flex justify-end">
+                <div className="h-5 w-5 bg-zinc-300 rounded-sm" />
+              </div>
+            </div>
           ))
         : (
-          <div className="relative">
-            {loading && list.length > 0 && (
-              <div className="absolute inset-0 bg-white/60 z-20 pointer-events-none" style={{ transition: "opacity 0.2s" }} />
-            )}
+          <div className="relative transition-opacity duration-500" style={{ opacity: loading ? 0.5 : 1 }}>
             {list.map((art, i) => (
               <ArtworkRow
                 key={art.id}

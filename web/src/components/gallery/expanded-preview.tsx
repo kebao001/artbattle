@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useArtwork } from "@/hooks/use-artwork";
 import { ArtworkImage } from "@/components/artwork/artwork-image";
+import { GalleryLoader } from "@/components/ui/gallery-loader";
 import type { Artwork } from "@/lib/types";
 
 export function ExpandedPreview({ art }: { art: Artwork }) {
@@ -12,8 +13,8 @@ export function ExpandedPreview({ art }: { art: Artwork }) {
     <div className="bg-black flex flex-col sm:flex-row gap-0">
       <div className="flex-1 min-w-0">
         {isLoading ? (
-          <div className="w-full bg-black/60" style={{ minHeight: 240 }}>
-            <div className="w-full h-full bg-white/5 animate-pulse" style={{ minHeight: 240 }} />
+          <div className="w-full bg-black flex items-center justify-center" style={{ minHeight: 240 }}>
+            <GalleryLoader size={56} />
           </div>
         ) : (
           <Link href={`/art/${art.id}`} onClick={(e) => e.stopPropagation()} className="block hover:opacity-90 transition-opacity">
