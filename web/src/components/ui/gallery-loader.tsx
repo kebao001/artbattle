@@ -1,62 +1,92 @@
+"use client";
+
 interface GalleryLoaderProps {
   size?: number;
+  /** "dark" = for dark/black backgrounds (white head), "light" = for light backgrounds (black head) */
+  theme?: "dark" | "light";
 }
 
-export function GalleryLoader({ size = 48 }: GalleryLoaderProps) {
-  const count = 12;
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = size * 0.34;
-  const capsuleW = size * 0.075;
+const COUNT = 14;
+
+export function GalleryLoader({ size = 96, theme = "dark" }: GalleryLoaderProps) {
+  const radius = size * 0.37;
+  const maxW = size * 0.11;   // full-width capsule (head)
+  const minW = size * 0.013;  // ultra-thin capsule (tail)
+  const capsuleH = size * 0.21;
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      style={{ animation: "gallery-loader-spin 1s linear infinite" }}
+    <div
+      style={{
+        width: size,
+        height: size,
+        position: "relative",
+        animation: `gl-spin 1.3s linear infinite`,
+      }}
     >
       <style>{`
-        @keyframes gallery-loader-spin {
+        @keyframes gl-spin {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
       `}</style>
 
-      {Array.from({ length: count }).map((_, i) => {
-        const angle = (i / count) * 2 * Math.PI - Math.PI / 2;
-        const t = i / count; // 0 = tail (light, short) → 1 = head (dark, long)
+      {Array.from({ length: COUNT }).map((_, i) => {
+        // t=0 → head (dark/wide), t=1 → tail (light/thin)
+        const t = i / COUNT;
 
-        // Length: short at tail, long at head
-        const minLen = size * 0.05;
-        const maxLen = size * 0.16;
-        const capsuleH = minLen + t * (maxLen - minLen);
+        // Width: exponential taper from full → sliver
+        const w = maxW - (maxW - minW) * Math.pow(t, 0.55);
 
-        // Color: light gray at tail → black at head
-        const lightness = Math.round(88 - t * 88); // 88 → 0
-        const fill = `hsl(0,0%,${lightness}%)`;
+        // Color + opacity
+        let color: string;
+        let opacity: number;
+        if (theme === "dark") {
+          // on black bg: head = white, tail = faint
+          const brightness = Math.round(98 - t * 70);
+          opacity = t > 0.55 ? 1 - ((t - 0.55) / 0.45) * 0.88 : 1;
+          color = `hsl(0,0%,${brightness}%)`;
+        } else {
+          // on white bg: head = black, tail = faint
+          const brightness = Math.round(4 + t * 88);
+          opacity = t > 0.55 ? 1 - ((t - 0.55) / 0.45) * 0.88 : 1;
+          color = `hsl(0,0%,${brightness}%)`;
+        }
 
-        // Position center of capsule
+        // Drop shadow — only on the darker/wider capsules
+        const shadowAlpha = theme === "dark"
+          ? (1 - t) * 0.4
+          : (1 - t) * 0.35;
+        const shadow = t < 0.6
+          ? `0 1.5px 4px rgba(0,0,0,${shadowAlpha})`
+          : "none";
+
+        // Position
+        const angle = (i / COUNT) * 2 * Math.PI - Math.PI / 2;
+        const cx = size / 2;
+        const cy = size / 2;
         const px = cx + radius * Math.cos(angle);
         const py = cy + radius * Math.sin(angle);
-
-        // Rotate capsule to point outward
-        const deg = (i / count) * 360;
+        const rotateDeg = (i / COUNT) * 360;
 
         return (
-          <rect
+          <div
             key={i}
-            x={px - capsuleW / 2}
-            y={py - capsuleH / 2}
-            width={capsuleW}
-            height={capsuleH}
-            rx={capsuleW / 2}
-            ry={capsuleW / 2}
-            fill={fill}
-            transform={`rotate(${deg}, ${px}, ${py})`}
+            style={{
+              position: "absolute",
+              left: px - w / 2,
+              top: py - capsuleH / 2,
+              width: w,
+              height: capsuleH,
+              borderRadius: w / 2,
+              backgroundColor: color,
+              opacity,
+              boxShadow: shadow,
+              transform: `rotate(${rotateDeg}deg)`,
+              transformOrigin: "center center",
+            }}
           />
         );
       })}
-    </svg>
+    </div>
   );
 }

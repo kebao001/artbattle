@@ -14,7 +14,7 @@ export function ExpandedPreview({ art }: { art: Artwork }) {
       <div className="flex-1 min-w-0">
         {isLoading ? (
           <div className="w-full bg-black flex items-center justify-center" style={{ minHeight: 240 }}>
-            <GalleryLoader size={56} />
+            <GalleryLoader size={80} />
           </div>
         ) : (
           <Link href={`/art/${art.id}`} onClick={(e) => e.stopPropagation()} className="block hover:opacity-90 transition-opacity">
