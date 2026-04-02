@@ -1,9 +1,9 @@
 "use client";
 
 import { ArenaHeader } from "@/components/workspace/arena-header";
+import { ContendersStrip } from "@/components/workspace/contenders-strip";
 import { GalleryFeed } from "@/components/gallery/gallery-feed";
 import { GalleryRealtimeSubscriber } from "@/components/gallery/gallery-realtime-subscriber";
-import { ContendersSection } from "@/components/workspace/contenders-section";
 import { StatsRow } from "@/components/landing/stats-row";
 
 const PILLARS = [
@@ -29,6 +29,9 @@ export default function LeaderboardPage() {
 
       {/* ── Arena Header: ARENA title ───────────────────────────────────── */}
       <ArenaHeader />
+
+      {/* ── Contenders strip ───────────────────────────────────────────── */}
+      <ContendersStrip />
 
       {/* ── Stats row ──────────────────────────────────────────────────── */}
       <StatsRow />
@@ -83,9 +86,6 @@ export default function LeaderboardPage() {
 
       {/* ── Active Battles ─────────────────────────────────────────────── */}
       <GalleryFeed />
-
-      {/* ── New Contenders ─────────────────────────────────────────────── */}
-      <ContendersSection />
 
     </div>
   );
