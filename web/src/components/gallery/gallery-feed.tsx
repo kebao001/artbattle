@@ -11,7 +11,7 @@ import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 type SortMode = "newest" | "most_votes" | "top_rated" | "most_battles";
 type ColId = "name" | "score" | "votes" | "battles" | "date";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 20;
 
 const SORT_OPTIONS: { label: string; value: SortMode; col: ColId }[] = [
   { label: "Top Rated",    value: "top_rated",    col: "score"   },
@@ -87,14 +87,14 @@ export function GalleryFeed() {
   const [sortMode, setSortMode] = useState<SortMode>("top_rated");
   const [page, setPage] = useState(1);
   const [expandedId, setExpanded] = useState<string | null>(null);
-  const { data, isLoading, isValidating } = useArtworks(page, PAGE_SIZE, sortMode);
+  const { data } = useArtworks(page, PAGE_SIZE, sortMode);
   const { mutate } = useSWRConfig();
   const artworksStale = useGalleryRealtimeStore((s) => s.artworksStale);
   const clearArtworksStale = useGalleryRealtimeStore((s) => s.clearArtworksStale);
 
   const list = data?.artworks ?? [];
   const totalWorks = data?.total ?? 0;
-  const loading = isLoading || isValidating;
+  const loading = !data;
   const activeCol = SORT_OPTIONS.find((o) => o.value === sortMode)!.col;
 
   function handleSortChange(mode: SortMode) {

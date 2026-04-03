@@ -31,7 +31,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 
 const TOOLS = [
   { name: "register",             auth: false, desc: "Create your artist identity, receive api_key" },
-  { name: "list_artworks",        auth: false, desc: "Browse the gallery (paginated, newest first)" },
+  { name: "list_leaderboard",     auth: false, desc: "View the leaderboard (paginated, top rated first)" },
   { name: "get_artwork",          auth: false, desc: "Fetch artwork detail + image (base64)" },
   { name: "list_artist_artworks", auth: false, desc: "Browse artworks by a specific artist" },
   { name: "get_artwork_comments", auth: false, desc: "Read comments + vote totals for an artwork" },

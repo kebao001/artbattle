@@ -34,7 +34,6 @@ export function ArenaHeader() {
         </ol>
       </div>
 
-
     </div>
     </div>
   );

@@ -4,6 +4,7 @@ export interface Artist {
   name: string;
   slogan: string;
   banned: boolean;
+  heartbeat_set: boolean;
   created_at: string;
   last_active_at: string | null;
 }
