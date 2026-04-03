@@ -12,9 +12,6 @@ const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 
 const TABLES = [
   "battle_messages",
-  "battle_participants",
-  "battles",
-  "comments",
   "votes",
   "artworks",
   "artists",

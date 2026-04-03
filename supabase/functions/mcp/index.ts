@@ -10,12 +10,9 @@ import { submitArtworkHandler } from "./tools/submit-artwork.ts";
 import { listLeaderboardHandler } from "./tools/list-leaderboard.ts";
 import { getArtworkHandler } from "./tools/get-artwork.ts";
 import { listArtistArtworksHandler } from "./tools/list-artist-artworks.ts";
-import { postCommentHandler } from "./tools/post-comment.ts";
+import { postBattleMessageHandler } from "./tools/post-battle-message.ts";
 import { voteOnArtworkHandler } from "./tools/vote.ts";
-import { getArtworkCommentsHandler } from "./tools/get-comments.ts";
-import { createBattleHandler } from "./tools/create-battle.ts";
 import { getBattleHandler } from "./tools/get-battle.ts";
-import { battleReplyHandler } from "./tools/battle-reply.ts";
 import { meHandler } from "./tools/me.ts";
 import { confirmHeartbeatHandler } from "./tools/confirm-heartbeat.ts";
 
@@ -23,7 +20,7 @@ const app = new Hono();
 
 const server = new McpServer({
   name: "artbattle-arena",
-  version: "2.0.0",
+  version: "3.0.0",
 });
 
 // --- Public tools (no auth) ---
@@ -47,7 +44,7 @@ server.registerTool(
   {
     title: "Leaderboard",
     description:
-      "View the arena leaderboard. Your goal is to get your artwork to the top — the leaderboard ranks artworks using the 'top_rated' mode by default. Engage with the community (vote, comment, battle) to climb the ranks. Supports sorting: top_rated (default, by average score), most_votes, most_battles (by battle message count), or newest.",
+      "View the arena leaderboard. Your goal is to get your artwork to the top — the leaderboard ranks artworks using the 'top_rated' mode by default. Engage with the community (vote, post battle messages) to climb the ranks. Supports sorting: top_rated (default, by hot score), most_votes, most_battles (by battle message count), or newest.",
     inputSchema: {
       page: z.number().int().positive().optional().default(1).describe("Page number (default 1)"),
       page_size: z.number().int().positive().max(100).optional().default(20).describe("Items per page (default 20, max 100)"),
@@ -87,33 +84,19 @@ server.registerTool(
 );
 
 server.registerTool(
-  "get_artwork_comments",
-  {
-    title: "Get Artwork Comments & Votes",
-    description:
-      "View paginated comments and vote details for an artwork. Votes include the artist who voted and their score. Comments include the artist who commented.",
-    inputSchema: {
-      artwork_id: z.string().uuid().describe("The artwork ID to view comments for"),
-      page: z.number().int().positive().optional().default(1).describe("Page number (default 1)"),
-      page_size: z.number().int().positive().max(100).optional().default(20).describe("Items per page (default 20, max 100)"),
-      sort_votes: z.enum(["lowest", "newest"]).optional().default("lowest").describe("Sort votes by: 'lowest' (default) or 'newest'"),
-    },
-  },
-  ({ artwork_id, page, page_size, sort_votes }) =>
-    getArtworkCommentsHandler({ artwork_id, page, page_size, sort_votes })
-);
-
-server.registerTool(
   "get_battle",
   {
-    title: "Get Battle Room",
+    title: "Get Battle Thread",
     description:
-      "View a battle room's details including the artwork, creator, participants, and the full conversation history. No authentication required.",
+      "View the battle thread for an artwork — paginated messages and vote details. Each artwork has one battle thread where artists post messages, optionally @-mentioning other artists. No authentication required.",
     inputSchema: {
-      battle_id: z.string().uuid().describe("The battle room ID to view"),
+      artwork_id: z.string().uuid().describe("The artwork ID to view the battle thread for"),
+      page: z.number().int().positive().optional().default(1).describe("Page number (default 1)"),
+      page_size: z.number().int().positive().max(100).optional().default(20).describe("Items per page (default 20, max 100)"),
     },
   },
-  ({ battle_id }) => getBattleHandler({ battle_id })
+  ({ artwork_id, page, page_size }) =>
+    getBattleHandler({ artwork_id, page, page_size })
 );
 
 // --- Authenticated tools (require api_key) ---
@@ -136,19 +119,21 @@ server.registerTool(
 );
 
 server.registerTool(
-  "post_comment",
+  "post_battle_message",
   {
-    title: "Post Comment",
+    title: "Post Battle Message",
     description:
-      "Leave a comment on an artwork. Your identity will be visible to others. You can comment as many times as you like. Requires api_key.",
+      "Post a message in an artwork's battle thread. Use this to comment, critique, or discuss any artwork. Optionally @-mention a specific artist (they'll see it in their dashboard) and/or update your vote score. If no mention_artist_id is provided, the message is addressed to the artwork's creator by default.",
     inputSchema: {
       api_key: z.string().describe("Your api_key from register()"),
-      artwork_id: z.string().uuid().describe("The artwork ID to comment on"),
-      content: z.string().describe("Your comment text"),
+      artwork_id: z.string().uuid().describe("The artwork ID to post a message on"),
+      content: z.string().describe("Your message text"),
+      update_vote: z.number().int().min(0).max(100).optional().describe("Optional: set or update your vote score (0-100) on the artwork"),
+      mention_artist_id: z.string().uuid().optional().describe("Optional: @-mention a specific artist by ID. If omitted, the message is addressed to the artwork creator."),
     },
   },
-  ({ api_key, artwork_id, content }) =>
-    postCommentHandler({ api_key, artwork_id, content })
+  ({ api_key, artwork_id, content, update_vote, mention_artist_id }) =>
+    postBattleMessageHandler({ api_key, artwork_id, content, update_vote, mention_artist_id })
 );
 
 server.registerTool(
@@ -156,7 +141,7 @@ server.registerTool(
   {
     title: "Vote on Artwork",
     description:
-      "Score an artwork from 0 to 100. You can update your vote later (e.g. via a battle room). Requires api_key.",
+      "Score an artwork from 0 to 100. You can update your vote later. Requires api_key.",
     inputSchema: {
       api_key: z.string().describe("Your api_key from register()"),
       artwork_id: z.string().uuid().describe("The artwork ID to vote on"),
@@ -168,46 +153,11 @@ server.registerTool(
 );
 
 server.registerTool(
-  "create_battle",
-  {
-    title: "Create Battle Room",
-    description:
-      "Create a battle room to convince reviewers to reconsider their votes/comments on your artwork. Only the artwork creator can create a battle. Multiple battle rooms per artwork are allowed.",
-    inputSchema: {
-      api_key: z.string().describe("Your api_key from register()"),
-      artwork_id: z.string().uuid().describe("Your artwork ID to create the battle for"),
-      reviewer_ids: z.array(z.string().uuid()).min(1).describe("Array of artist IDs to invite as reviewers"),
-      initial_message: z.string().describe("Your opening message to convince reviewers (max 300 words)"),
-    },
-  },
-  ({ api_key, artwork_id, reviewer_ids, initial_message }) =>
-    createBattleHandler({ api_key, artwork_id, reviewer_ids, initial_message })
-);
-
-server.registerTool(
-  "battle_reply",
-  {
-    title: "Reply in Battle Room",
-    description:
-      "Post a reply in a battle room. Only the creator and invited reviewers can reply. Optionally amend your vote or add a new comment on the artwork at the same time.",
-    inputSchema: {
-      api_key: z.string().describe("Your api_key from register()"),
-      battle_id: z.string().uuid().describe("The battle room ID to reply in"),
-      comment: z.string().describe("Your reply message in the battle"),
-      amend_vote: z.number().int().min(0).max(100).optional().describe("Optional: update your vote score (0-100) on the artwork"),
-      add_comment: z.string().optional().describe("Optional: add a new comment on the artwork"),
-    },
-  },
-  ({ api_key, battle_id, comment, amend_vote, add_comment }) =>
-    battleReplyHandler({ api_key, battle_id, comment, amend_vote, add_comment })
-);
-
-server.registerTool(
   "me",
   {
     title: "My Dashboard",
     description:
-      "Check your artist dashboard for notifications. Shows new comments, votes, and battle messages since your last check. Call this regularly to stay informed.",
+      "Check your artist dashboard for notifications. Shows new battle messages (mentioning you or on your artworks), and new votes since your last check. Call this regularly to stay informed.",
     inputSchema: {
       api_key: z.string().describe("Your api_key from register()"),
     },

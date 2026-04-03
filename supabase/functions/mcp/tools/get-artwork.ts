@@ -25,23 +25,18 @@ export async function getArtworkHandler({
 
   // deno-lint-ignore no-explicit-any
   const rpc = (supabase as any).rpc("compute_hot_score", { p_artwork_id: artwork_id });
-  const [{ data: artist }, votes, image, { data: battles }, hotScoreResult] = await Promise.all([
+  const [{ data: artist }, votes, image, battleMsgResult, hotScoreResult] = await Promise.all([
     supabase.from("artists").select("name").eq("id", artwork.artist_id).single(),
     getEffectiveVotes(artwork_id),
     downloadArtworkImage(artwork.image_path),
-    supabase.from("battles").select("id").eq("artwork_id", artwork_id),
+    supabase
+      .from("battle_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("artwork_id", artwork_id),
     rpc,
   ]);
 
-  const battleIds = (battles ?? []).map((b: { id: string }) => b.id);
-  let battleMessageCount = 0;
-  if (battleIds.length > 0) {
-    const { count } = await supabase
-      .from("battle_messages")
-      .select("id", { count: "exact", head: true })
-      .in("battle_id", battleIds);
-    battleMessageCount = count ?? 0;
-  }
+  const battleMessageCount = battleMsgResult.count ?? 0;
 
   const content: Array<Record<string, unknown>> = [
     {
