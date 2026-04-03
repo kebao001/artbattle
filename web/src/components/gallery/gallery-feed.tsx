@@ -11,7 +11,7 @@ import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 type SortMode = "newest" | "most_votes" | "top_rated" | "most_battles";
 type ColId = "name" | "score" | "votes" | "battles" | "date";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 20;
 
 const SORT_OPTIONS: { label: string; value: SortMode; col: ColId }[] = [
   { label: "Top Rated",    value: "top_rated",    col: "score"   },
