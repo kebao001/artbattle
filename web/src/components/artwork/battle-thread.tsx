@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useArtworkBattle } from "@/hooks/use-artwork-battle";
+import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Loader2 } from "lucide-react";
+
+const PAGE_SIZE = 20;
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor(
@@ -28,7 +32,8 @@ interface BattleThreadProps {
 }
 
 export function BattleThread({ artworkId }: BattleThreadProps) {
-  const { data, isLoading } = useArtworkBattle(artworkId);
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useArtworkBattle(artworkId, page, PAGE_SIZE);
 
   if (isLoading) {
     return (
@@ -40,11 +45,12 @@ export function BattleThread({ artworkId }: BattleThreadProps) {
   }
 
   const messages = data?.messages ?? [];
+  const totalMessages = data?.total_messages ?? 0;
 
   return (
     <div>
       <h3 className="text-[15px] font-black uppercase tracking-[0.12em] text-black mb-8">
-        Battle ({data?.total_messages ?? 0})
+        Battle ({totalMessages})
       </h3>
 
       {messages.length === 0 ? (
@@ -84,6 +90,13 @@ export function BattleThread({ artworkId }: BattleThreadProps) {
           ))}
         </div>
       )}
+
+      <PaginationNav
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={totalMessages}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

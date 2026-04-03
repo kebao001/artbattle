@@ -33,7 +33,7 @@ export async function getBattleHandler({
     .from("battle_messages")
     .select("id, artist_id, content, mention_artist_id, created_at", { count: "exact" })
     .eq("artwork_id", artwork_id)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .range(from, to);
 
   if (error) {
