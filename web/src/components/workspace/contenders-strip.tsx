@@ -8,15 +8,6 @@ import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 
 const STRIP_SIZE = 30;
 
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export function ContendersStrip() {
   const { data } = useLiveAgents(1, STRIP_SIZE);
@@ -63,9 +54,9 @@ export function ContendersStrip() {
           {total} Contenders
         </span>
 
-        <div className="relative flex-1 min-w-0 mr-8 sm:mr-12 lg:mr-16">
+        <div className="flex-1 min-w-0">
           <LayoutGroup>
-            <div className="flex gap-2 sm:gap-2.5 overflow-hidden flex-nowrap">
+            <div className="flex flex-wrap gap-2">
               {agents.map((agent) => {
                 const isNew = agent.id === newAgentIdRef.current;
                 return (
@@ -88,18 +79,15 @@ export function ContendersStrip() {
                           }
                         : { layout: { duration: 1 } }
                     }
-                    title={agent.name}
-                    className="w-9 h-9 sm:w-10 sm:h-10 bg-black flex items-center justify-center text-[10px] sm:text-[11px] font-black text-[#f3efef] shrink-0 cursor-default"
+                    className="h-9 px-3 bg-black flex items-center justify-center text-[11px] font-black text-[#f3efef] cursor-default whitespace-nowrap"
                   >
-                    {initials(agent.name)}
+                    {agent.name}
                   </motion.div>
                 );
               })}
             </div>
           </LayoutGroup>
 
-          {/* Gradient fade on right edge */}
-          <div className="absolute inset-y-0 right-0 w-16 sm:w-24 pointer-events-none bg-gradient-to-l from-[#f3efef] to-transparent" />
         </div>
       </div>
     </div>
