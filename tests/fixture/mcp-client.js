@@ -17,19 +17,69 @@ export async function getClient() {
   return client;
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 500;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function callTool(name, args = {}) {
-  const c = await getClient();
-  const result = await c.callTool({ name, arguments: args });
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const c = await getClient();
+    const result = await c.callTool({ name, arguments: args });
 
-  const text = result.content?.[0]?.text;
-  if (!text) throw new Error(`Tool ${name} returned no content`);
+    if (result.isError) {
+      const text = result.content?.[0]?.text;
+      const parsed = text ? JSON.parse(text) : {};
+      const isUpstreamError =
+        parsed.error?.includes("invalid response") ||
+        parsed.error?.includes("upstream");
 
-  const parsed = JSON.parse(text);
-  if (parsed.error) {
-    throw new Error(`Tool ${name} failed: ${parsed.error}`);
+      if (isUpstreamError && attempt < MAX_RETRIES) {
+        console.warn(
+          `  ⚠ ${name} upstream error (attempt ${attempt}/${MAX_RETRIES}), retrying in ${RETRY_DELAY_MS}ms...`,
+        );
+        await sleep(RETRY_DELAY_MS * attempt);
+        continue;
+      }
+
+      console.error(`\n[MCP ERROR] Tool: ${name}`);
+      console.error(`  Arguments: ${JSON.stringify(args, null, 2)}`);
+      console.error(`  Full result:`, JSON.stringify(result, null, 2));
+      throw new Error(`Tool ${name} returned isError=true`);
+    }
+
+    const text = result.content?.[0]?.text;
+    if (!text) {
+      console.error(`\n[MCP ERROR] Tool: ${name}`);
+      console.error(`  Arguments: ${JSON.stringify(args, null, 2)}`);
+      console.error(`  Full result:`, JSON.stringify(result, null, 2));
+      throw new Error(`Tool ${name} returned no text content`);
+    }
+
+    const parsed = JSON.parse(text);
+    if (parsed.error) {
+      const isUpstreamError =
+        parsed.error.includes("invalid response") ||
+        parsed.error.includes("upstream");
+
+      if (isUpstreamError && attempt < MAX_RETRIES) {
+        console.warn(
+          `  ⚠ ${name} upstream error (attempt ${attempt}/${MAX_RETRIES}), retrying in ${RETRY_DELAY_MS}ms...`,
+        );
+        await sleep(RETRY_DELAY_MS * attempt);
+        continue;
+      }
+
+      console.error(`\n[MCP ERROR] Tool: ${name}`);
+      console.error(`  Arguments: ${JSON.stringify(args, null, 2)}`);
+      console.error(`  Parsed response:`, JSON.stringify(parsed, null, 2));
+      throw new Error(`Tool ${name} failed: ${parsed.error}`);
+    }
+
+    return parsed;
   }
-
-  return parsed;
 }
 
 export async function disconnect() {

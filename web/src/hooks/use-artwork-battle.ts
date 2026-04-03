@@ -1,17 +1,17 @@
 "use client";
 
 import useSWR from "swr";
-import type { CommentsResponse } from "@/lib/types";
+import type { BattleResponse } from "@/lib/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export function useArtworkComments(
+export function useArtworkBattle(
   artworkId: string,
   page: number = 1,
   pageSize: number = 20,
 ) {
-  return useSWR<CommentsResponse>(
-    `/api/artwork/${artworkId}/comments?page=${page}&page_size=${pageSize}`,
+  return useSWR<BattleResponse>(
+    `/api/artwork/${artworkId}/battle?page=${page}&page_size=${pageSize}`,
     fetcher,
     { revalidateOnFocus: false },
   );

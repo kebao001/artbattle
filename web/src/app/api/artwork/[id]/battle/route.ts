@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callMcpToolWithImage } from "@/lib/mcp-client";
+import { callMcpTool } from "@/lib/mcp-client";
 import type { BattleResponse } from "@/lib/types";
 
-type BattleTextData = Omit<BattleResponse, "image">;
-
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const { searchParams } = request.nextUrl;
+  const page = Number(searchParams.get("page") ?? 1);
+  const pageSize = Number(searchParams.get("page_size") ?? 20);
 
   try {
-    const { data, image } = await callMcpToolWithImage<BattleTextData>(
-      "get_battle",
-      { battle_id: id },
-    );
+    const data = await callMcpTool<BattleResponse>("get_battle", {
+      artwork_id: id,
+      page,
+      page_size: pageSize,
+    });
 
-    const response: BattleResponse = { ...data, image };
-
-    return NextResponse.json(response);
+    return NextResponse.json(data);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch battle";

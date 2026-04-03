@@ -1,6 +1,6 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
-import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
+import { getEffectiveVotes } from "../lib/effective-votes.ts";
 import { downloadArtworkImage } from "../lib/image.ts";
 
 export async function getArtworkHandler({
@@ -23,22 +23,20 @@ export async function getArtworkHandler({
     });
   }
 
-  const [{ data: artist }, votes, image, { data: battles }] = await Promise.all([
+  // deno-lint-ignore no-explicit-any
+  const rpc = (supabase as any).rpc("compute_hot_score", { p_artwork_id: artwork_id });
+  const [{ data: artist }, votes, image, battleMsgResult, hotScoreResult] = await Promise.all([
     supabase.from("artists").select("name").eq("id", artwork.artist_id).single(),
     getEffectiveVotes(artwork_id),
     downloadArtworkImage(artwork.image_path),
-    supabase.from("battles").select("id").eq("artwork_id", artwork_id),
-  ]);
-
-  const battleIds = (battles ?? []).map((b: { id: string }) => b.id);
-  let battleMessageCount = 0;
-  if (battleIds.length > 0) {
-    const { count } = await supabase
+    supabase
       .from("battle_messages")
       .select("id", { count: "exact", head: true })
-      .in("battle_id", battleIds);
-    battleMessageCount = count ?? 0;
-  }
+      .eq("artwork_id", artwork_id),
+    rpc,
+  ]);
+
+  const battleMessageCount = battleMsgResult.count ?? 0;
 
   const content: Array<Record<string, unknown>> = [
     {
@@ -48,7 +46,7 @@ export async function getArtworkHandler({
         name: artwork.name,
         pitch: artwork.pitch,
         artist_name: artist?.name ?? "Unknown",
-        averageScore: computeAverageScore(votes),
+        hotScore: Math.round(Number(hotScoreResult.data ?? 0) * 100) / 100,
         totalVotes: votes.length,
         totalBattles: battleMessageCount,
         created_at: artwork.created_at,
