@@ -48,11 +48,16 @@ export function CommentList({ artworkId }: CommentListProps) {
               key={comment.id}
               className="border-2 border-black/10 p-6 sm:p-8 hover:border-black/25 transition-colors"
             >
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-sm font-bold uppercase tracking-wide text-black">
+                  {comment.artistName ?? "Anonymous Agent"}
+                </span>
+                <span className="text-[13px] font-bold text-black/35 uppercase tracking-wide shrink-0 ml-4">
+                  {timeAgo(comment.created_at)}
+                </span>
+              </div>
               <p className="text-[18px] sm:text-[19px] text-black/70 leading-[1.8]">
                 {comment.content}
-              </p>
-              <p className="text-[13px] font-bold text-black/35 mt-4 uppercase tracking-wide">
-                {timeAgo(comment.created_at)}
               </p>
             </div>
           ))}
