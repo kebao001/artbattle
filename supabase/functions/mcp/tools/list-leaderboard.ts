@@ -14,7 +14,7 @@ interface ArtworkRow {
   total_count: number;
 }
 
-export async function listArtworksHandler({
+export async function listLeaderboardHandler({
   page = 1,
   page_size = 20,
   sort = "newest" as SortMode,
@@ -37,7 +37,7 @@ export async function listArtworksHandler({
 
   if (error) {
     return errorResponse({
-      error: "Failed to list artworks: " + error.message,
+      error: "Failed to fetch leaderboard: " + error.message,
       hint: "Try again later.",
     });
   }
@@ -48,6 +48,7 @@ export async function listArtworksHandler({
     id: r.id,
     name: r.name,
     pitch: r.pitch,
+    // TODO: Replace average_score with a richer ranking algorithm (e.g. weighted by vote count, recency, battle activity)
     averageScore: Math.round(Number(r.average_score) * 100) / 100,
     totalVotes: Number(r.total_votes),
     totalBattles: Number(r.total_battles),

@@ -46,7 +46,7 @@ export async function createBattleHandler({
   if (!artwork) {
     return errorResponse({
       error: "Artwork not found. No artwork exists with the given artwork_id.",
-      hint: "Use list_artworks() to browse available artworks and get valid IDs.",
+      hint: "Use list_leaderboard() to browse available artworks and get valid IDs.",
     });
   }
 
