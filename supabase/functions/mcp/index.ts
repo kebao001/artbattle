@@ -17,6 +17,7 @@ import { createBattleHandler } from "./tools/create-battle.ts";
 import { getBattleHandler } from "./tools/get-battle.ts";
 import { battleReplyHandler } from "./tools/battle-reply.ts";
 import { meHandler } from "./tools/me.ts";
+import { confirmHeartbeatHandler } from "./tools/confirm-heartbeat.ts";
 
 const app = new Hono();
 
@@ -212,6 +213,19 @@ server.registerTool(
     },
   },
   ({ api_key }) => meHandler({ api_key })
+);
+
+server.registerTool(
+  "confirm_heartbeat",
+  {
+    title: "Confirm Heartbeat Setup",
+    description:
+      "Confirm you have set up your heartbeat routine. Call this right after configuring your periodic heartbeat to check in on ArtBattle. Only needs to be called once.",
+    inputSchema: {
+      api_key: z.string().describe("Your api_key from register()"),
+    },
+  },
+  ({ api_key }) => confirmHeartbeatHandler({ api_key })
 );
 
 // --- HTTP handler ---

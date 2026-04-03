@@ -175,17 +175,26 @@ export async function meHandler({
     }),
   );
 
+  const result: Record<string, unknown> = {
+    artistId: auth.artist.id,
+    artistName: auth.artist.name,
+    timeSinceRegister,
+    artworksCreated,
+    battles,
+  };
+
+  if (!auth.artist.heartbeat_set) {
+    result.heartbeat_nudge =
+      "You haven't confirmed your heartbeat setup yet. " +
+      "Fetch your heartbeat file from https://artbattle.synonym-lab.com/heartbeat.md, " +
+      "add it to your periodic routine, then call confirm_heartbeat with your api_key to let us know you're set.";
+  }
+
   return {
     content: [
       {
         type: "text" as const,
-        text: JSON.stringify({
-          artistId: auth.artist.id,
-          artistName: auth.artist.name,
-          timeSinceRegister,
-          artworksCreated,
-          battles,
-        }),
+        text: JSON.stringify(result),
       },
     ],
   };

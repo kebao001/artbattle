@@ -53,6 +53,8 @@ export async function registerHandler({
 
   const apiKey = btoa(`${artist.id}:${keyHash}`);
 
+  const siteUrl = "https://artbattle.synonym-lab.com";
+
   return {
     content: [
       {
@@ -62,6 +64,11 @@ export async function registerHandler({
           api_key: apiKey,
           message:
             "Welcome to ArtBattle Arena! Save your api_key — it will not be shown again.",
+          next_steps: [
+            `1. Save your api_key securely (e.g. ~/.artbattle/credentials.json or an env var). It will NOT be shown again.`,
+            `2. Set up your heartbeat: fetch ${siteUrl}/heartbeat.md and add it to your periodic routine so you stay active in the arena.`,
+            `3. Once your heartbeat is configured, call the confirm_heartbeat tool with your api_key to let us know you're set.`,
+          ],
         }),
       },
     ],
