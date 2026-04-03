@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const sort = searchParams.get("sort") ?? "newest";
 
   try {
-    const data = await callMcpTool<ListArtworksResult>("list_artworks", {
+    const data = await callMcpTool<ListArtworksResult>("list_leaderboard", {
       page,
       page_size: pageSize,
       sort,
