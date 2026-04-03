@@ -1,22 +1,34 @@
 -- ============================================================
--- Migration 0009: Hot ranking algorithm
---
--- Replaces simple average_score sorting with a Reddit-inspired
--- hot ranking formula:
---
---   hot_score = log10(1 + S) + (t_freshness - t_epoch) / T
---
--- S           = SUM of effective vote scores
--- t_freshness = weighted avg of artwork created_at + vote timestamps
--- t_epoch     = 2026-04-01 00:00:00 UTC  (1743465600 epoch seconds)
--- T           = 259200  (3 days in seconds)
+-- 0002_functions.sql — RPC functions
 -- ============================================================
 
--- Single-artwork hot score (reused by list_artworks_sorted and
--- callable directly via RPC for individual artwork lookups).
+-- 1. Count distinct vote pairs
+--    Supabase JS client can't express COUNT(DISTINCT …) directly.
+-- ------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION count_distinct_votes()
+RETURNS bigint
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT count(*)
+  FROM (SELECT DISTINCT artwork_id, artist_id FROM votes) AS pairs;
+$$;
+
+-- 2. Hot score for a single artwork
+--    Reddit-inspired formula:
+--      hot_score = log10(1 + S) + (t_freshness - t_epoch) / T
+--    S           = SUM of effective vote scores
+--    t_freshness = weighted avg of artwork created_at + vote timestamps
+--    t_epoch     = 2026-04-01 00:00:00 UTC  (1743465600 epoch seconds)
+--    T           = 259200  (3 days in seconds)
+-- ------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION compute_hot_score(p_artwork_id uuid)
 RETURNS numeric
-LANGUAGE sql STABLE AS $$
+LANGUAGE sql
+STABLE
+AS $$
   WITH effective_votes AS (
     SELECT v.score, v.created_at
     FROM votes v
@@ -39,25 +51,28 @@ LANGUAGE sql STABLE AS $$
   GROUP BY a.id, a.created_at;
 $$;
 
--- Rebuild list_artworks_sorted with hot_score column.
-DROP FUNCTION IF EXISTS list_artworks_sorted(text, int, int);
+-- 3. Paginated leaderboard with multiple sort modes
+--    Sort modes: top_rated (hot score), most_votes, most_battles, newest
+-- ------------------------------------------------------------
 
-CREATE FUNCTION list_artworks_sorted(
-  sort_mode text DEFAULT 'newest',
-  page_limit int DEFAULT 20,
-  page_offset int DEFAULT 0
+CREATE OR REPLACE FUNCTION list_artworks_sorted(
+  sort_mode   text DEFAULT 'newest',
+  page_limit  int  DEFAULT 20,
+  page_offset int  DEFAULT 0
 )
 RETURNS TABLE(
-  id uuid,
-  name text,
-  pitch text,
-  created_at timestamptz,
-  hot_score numeric,
-  total_votes bigint,
+  id            uuid,
+  name          text,
+  pitch         text,
+  created_at    timestamptz,
+  hot_score     numeric,
+  total_votes   bigint,
   total_battles bigint,
-  total_count bigint
+  total_count   bigint
 )
-LANGUAGE sql STABLE AS $$
+LANGUAGE sql
+STABLE
+AS $$
   WITH effective_votes AS (
     SELECT DISTINCT ON (v.artwork_id, v.artist_id)
       v.artwork_id, v.score
@@ -71,10 +86,9 @@ LANGUAGE sql STABLE AS $$
     SELECT
       a.id, a.name, a.pitch, a.created_at,
       compute_hot_score(a.id) AS hot_score,
-      COUNT(ev.score) AS total_votes,
+      COUNT(ev.score)         AS total_votes,
       (SELECT COUNT(*) FROM battle_messages bm
-        JOIN battles b ON b.id = bm.battle_id
-        WHERE b.artwork_id = a.id) AS total_battles
+        WHERE bm.artwork_id = a.id) AS total_battles
     FROM artworks a
     LEFT JOIN effective_votes ev ON ev.artwork_id = a.id
     GROUP BY a.id
