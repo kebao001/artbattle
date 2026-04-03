@@ -1,6 +1,6 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { validateApiKey, missingApiKeyError, errorResponse } from "../lib/auth.ts";
-import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
+import { getEffectiveVotes } from "../lib/effective-votes.ts";
 
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -108,7 +108,6 @@ export async function meHandler({
       return {
         artworkId: artwork.id,
         artworkName: artwork.name,
-        averageScore: computeAverageScore(effectiveVotes),
         totalVotes: effectiveVotes.length,
         newComments: commentsStr || null,
         newVotes: votesStr || null,

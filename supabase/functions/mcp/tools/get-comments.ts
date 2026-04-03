@@ -1,6 +1,6 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
-import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
+import { getEffectiveVotes } from "../lib/effective-votes.ts";
 
 export async function getArtworkCommentsHandler({
   artwork_id,
@@ -70,15 +70,12 @@ export async function getArtworkCommentsHandler({
     effectiveVotes.sort((a, b) => a.score - b.score);
   }
 
-  const averageScore = computeAverageScore(effectiveVotes);
-
   return {
     content: [
       {
         type: "text" as const,
         text: JSON.stringify({
           artwork_id,
-          averageScore,
           totalVotes: effectiveVotes.length,
           votes: effectiveVotes.map((v) => ({
             artistId: v.artist_id,

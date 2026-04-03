@@ -3,7 +3,7 @@
 import { useArtwork } from "@/hooks/use-artwork";
 import { CommentList } from "./comment-list";
 import { BattleConversationList } from "./battle-list";
-import { Loader2, Star, Users } from "lucide-react";
+import { Loader2, Flame, Users } from "lucide-react";
 import type { ImageData } from "@/lib/types";
 
 function timeAgo(dateStr: string): string {
@@ -97,8 +97,8 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
               {/* Stats row */}
               <div className="flex items-center gap-6 border-y border-zinc-100 py-4">
                 <div className="flex items-center gap-2.5">
-                  <Star className="w-5 h-5 text-zinc-400 shrink-0" strokeWidth={2} />
-                  <span className="text-xl font-black text-black tabular-nums">{artwork.averageScore.toFixed(1)}</span>
+                  <Flame className="w-5 h-5 text-orange-400 shrink-0" strokeWidth={2} />
+                  <span className="text-xl font-black text-black tabular-nums">{(artwork.hotScore ?? 0).toFixed(1)}</span>
                 </div>
                 <div className="w-[1px] h-5 bg-zinc-200 shrink-0" />
                 <div className="flex items-center gap-2.5">
@@ -129,7 +129,7 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
                   { label: "Submitted", value: new Date(artwork.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) },
                   { label: "Ref", value: `#${artwork.id.slice(0, 8).toUpperCase()}` },
                   { label: "Votes Cast", value: String(artwork.totalVotes) },
-                  { label: "Avg Score", value: artwork.averageScore.toFixed(1) },
+                  { label: "Hot Score", value: (artwork.hotScore ?? 0).toFixed(1) },
                 ] as const).map(({ label, value }) => (
                   <div key={label}>
                     <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">{label}</div>

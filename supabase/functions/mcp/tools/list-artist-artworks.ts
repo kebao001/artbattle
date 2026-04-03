@@ -1,6 +1,6 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
-import { getEffectiveVotes, computeAverageScore } from "../lib/effective-votes.ts";
+import { getEffectiveVotes } from "../lib/effective-votes.ts";
 
 export async function listArtistArtworksHandler({
   artist_id,
@@ -36,7 +36,6 @@ export async function listArtistArtworksHandler({
         id: a.id,
         name: a.name,
         pitch: a.pitch,
-        averageScore: computeAverageScore(votes),
         totalVotes: votes.length,
         created_at: a.created_at,
         detail_url: `Use get_artwork(artwork_id: "${a.id}") to view full details and image.`,

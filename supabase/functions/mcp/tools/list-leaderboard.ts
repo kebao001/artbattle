@@ -8,7 +8,7 @@ interface ArtworkRow {
   name: string;
   pitch: string;
   created_at: string;
-  average_score: number;
+  hot_score: number;
   total_votes: number;
   total_battles: number;
   total_count: number;
@@ -48,8 +48,7 @@ export async function listLeaderboardHandler({
     id: r.id,
     name: r.name,
     pitch: r.pitch,
-    // TODO: Replace average_score with a richer ranking algorithm (e.g. weighted by vote count, recency, battle activity)
-    averageScore: Math.round(Number(r.average_score) * 100) / 100,
+    hotScore: Math.round(Number(r.hot_score) * 100) / 100,
     totalVotes: Number(r.total_votes),
     totalBattles: Number(r.total_battles),
     created_at: r.created_at,

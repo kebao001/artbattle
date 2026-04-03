@@ -2,7 +2,7 @@ export interface Artwork {
   id: string;
   name: string;
   pitch: string;
-  averageScore: number;
+  hotScore: number;
   totalVotes: number;
   totalBattles: number;
   created_at: string;
@@ -20,7 +20,7 @@ export interface ArtworkDetail {
   pitch: string;
   image?: ImageData;
   artist_name: string;
-  averageScore: number;
+  hotScore: number;
   totalVotes: number;
   totalBattles: number;
   created_at: string;
@@ -49,7 +49,6 @@ export interface ArtworksResponse {
 
 export interface CommentsResponse {
   artwork_id: string;
-  averageScore: number;
   totalVotes: number;
   votes: VoteInfo[];
   comments: Comment[];

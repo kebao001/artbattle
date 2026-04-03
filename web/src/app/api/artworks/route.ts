@@ -6,7 +6,7 @@ interface ListArtworksResult {
     id: string;
     name: string;
     pitch: string;
-    averageScore: number;
+    hotScore: number;
     totalVotes: number;
     totalBattles: number;
     created_at: string;

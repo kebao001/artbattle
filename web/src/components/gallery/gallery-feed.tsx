@@ -14,10 +14,10 @@ type ColId = "name" | "score" | "votes" | "battles" | "date";
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS: { label: string; value: SortMode; col: ColId }[] = [
-  { label: "Top Rated",    value: "top_rated",    col: "score"   },
-  { label: "Most Voted",   value: "most_votes",   col: "votes"   },
+  { label: "Top Rated", value: "top_rated", col: "score" },
+  { label: "Most Voted", value: "most_votes", col: "votes" },
   { label: "Most Battles", value: "most_battles", col: "battles" },
-  { label: "Newest",       value: "newest",        col: "date"    },
+  { label: "Newest", value: "newest", col: "date" },
 ];
 
 function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -124,72 +124,88 @@ export function GalleryFeed() {
 
   return (
     <section>
-    <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12">
-
-      {/* Header */}
-      <div className="mb-5 sm:mb-7">
-        <div className="flex justify-between items-baseline mb-6">
-          <h2 className="font-bold text-black tracking-tight" style={{ fontSize: "clamp(1rem, 2.5vw, 2.25rem)" }}>
-            Top Artwork for Gallery Presence
-          </h2>
-          <div className="flex items-center gap-2 shrink-0 ml-4">
-            {artworksStale && (
-              <button
-                type="button"
-                onClick={() => void handleRefreshGallery()}
-                aria-label="Load latest gallery artworks"
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-black px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black bg-[#f3efef] hover:bg-black hover:text-[#f3efef] transition-colors shrink-0"
-              >
-                <RefreshCw className="size-3 shrink-0" aria-hidden />
-                Fresh
-              </button>
-            )}
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
-              {totalWorks} works
-            </span>
+      <div className="max-w-[1800px] mx-auto px-8 sm:px-12 lg:px-16 pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12">
+        {/* Header */}
+        <div className="mb-5 sm:mb-7">
+          <div className="flex justify-between items-baseline mb-6">
+            <h2
+              className="font-bold text-black tracking-tight"
+              style={{ fontSize: "clamp(1rem, 2.5vw, 2.25rem)" }}
+            >
+              Top Artwork for Gallery Presence
+            </h2>
+            <div className="flex items-center gap-2 shrink-0 ml-4">
+              {artworksStale && (
+                <button
+                  type="button"
+                  onClick={() => void handleRefreshGallery()}
+                  aria-label="Load latest gallery artworks"
+                  className="inline-flex items-center gap-1.5 rounded-full border-2 border-black px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black bg-[#f3efef] hover:bg-black hover:text-[#f3efef] transition-colors shrink-0"
+                >
+                  <RefreshCw className="size-3 shrink-0" aria-hidden />
+                  Fresh
+                </button>
+              )}
+              <span className="text-xs font-bold text-zinc-400 uppercase tracking-wide">
+                {totalWorks} works
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-4">
+            {SORT_OPTIONS.map((opt) => (
+              <Pill
+                key={opt.value}
+                label={opt.label}
+                active={sortMode === opt.value}
+                onClick={() => handleSortChange(opt.value)}
+              />
+            ))}
           </div>
         </div>
-        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-4">
-          {SORT_OPTIONS.map((opt) => (
-            <Pill key={opt.value} label={opt.label} active={sortMode === opt.value} onClick={() => handleSortChange(opt.value)} />
-          ))}
-        </div>
-      </div>
 
-      {/* Column headers */}
-      <div
-        className="grid border-b-2 border-black"
-        style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
-      >
-        <div className="pl-2">
-          <ColHeader label="Artwork" highlighted={false} />
+        {/* Column headers */}
+        <div
+          className="grid border-b-2 border-black"
+          style={{
+            gridTemplateColumns: "1fr 100px 90px 80px 90px 48px",
+            gap: "0 16px",
+          }}
+        >
+          <div className="pl-2">
+            <ColHeader label="Artwork" highlighted={false} />
+          </div>
+          <div className="hidden sm:block">
+            <ColHeader label="Top Rated" highlighted={activeCol === "score"} />
+          </div>
+          <div className="hidden sm:block">
+            <ColHeader label="Votes" highlighted={activeCol === "votes"} />
+          </div>
+          <div className="hidden md:block">
+            <ColHeader label="Battles" highlighted={activeCol === "battles"} />
+          </div>
+          <div className="hidden md:block">
+            <ColHeader label="Date" highlighted={activeCol === "date"} />
+          </div>
+          <div />
         </div>
-        <div className="hidden sm:block">
-          <ColHeader label="Score" highlighted={activeCol === "score"} />
-        </div>
-        <div className="hidden sm:block">
-          <ColHeader label="Votes" highlighted={activeCol === "votes"} />
-        </div>
-        <div className="hidden md:block">
-          <ColHeader label="Battles" highlighted={activeCol === "battles"} />
-        </div>
-        <div className="hidden md:block">
-          <ColHeader label="Date" highlighted={activeCol === "date"} />
-        </div>
-        <div />
-      </div>
 
-      {/* Rows */}
-      {loading && list.length === 0
-        ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
+        {/* Rows */}
+        {loading && list.length === 0 ? (
+          Array.from({ length: PAGE_SIZE }).map((_, i) => (
             <div
               key={i}
               className="grid items-center border-b border-black/10 animate-pulse"
-              style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
+              style={{
+                gridTemplateColumns: "1fr 100px 90px 80px 90px 48px",
+                gap: "0 16px",
+              }}
             >
               {/* Name */}
               <div className="py-5 pl-2">
-                <div className="h-[18px] bg-zinc-300 rounded-sm" style={{ width: `${55 + (i * 17) % 35}%` }} />
+                <div
+                  className="h-[18px] bg-zinc-300 rounded-sm"
+                  style={{ width: `${55 + ((i * 17) % 35)}%` }}
+                />
               </div>
               {/* Score */}
               <div className="py-5 hidden sm:block">
@@ -213,8 +229,11 @@ export function GalleryFeed() {
               </div>
             </div>
           ))
-        : (
-          <div className="relative transition-opacity duration-500" style={{ opacity: loading ? 0.5 : 1 }}>
+        ) : (
+          <div
+            className="relative transition-opacity duration-500"
+            style={{ opacity: loading ? 0.5 : 1 }}
+          >
             {list.map((art, i) => (
               <ArtworkRow
                 key={art.id}
@@ -227,16 +246,16 @@ export function GalleryFeed() {
           </div>
         )}
 
-      {/* Pagination */}
-      {data && (
-        <PaginationNav
-          page={page}
-          pageSize={PAGE_SIZE}
-          total={data.total}
-          onPageChange={handlePageChange}
-        />
-      )}
-    </div>
+        {/* Pagination */}
+        {data && (
+          <PaginationNav
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={data.total}
+            onPageChange={handlePageChange}
+          />
+        )}
+      </div>
     </section>
   );
 }
