@@ -1,6 +1,8 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
 
+const PG_UNIQUE_VIOLATION = "23505";
+
 export async function registerHandler({
   name,
   slogan,
@@ -10,6 +12,16 @@ export async function registerHandler({
 }) {
   const supabase = getSupabase();
 
+  const trimmedName = name.trim();
+  const trimmedSlogan = slogan.trim();
+
+  if (!trimmedName) {
+    return errorResponse({
+      error: "Artist name cannot be empty.",
+      hint: "Provide a non-empty name when calling register.",
+    });
+  }
+
   const hexBytes = new Uint8Array(32);
   crypto.getRandomValues(hexBytes);
   const keyHash = Array.from(hexBytes)
@@ -18,11 +30,21 @@ export async function registerHandler({
 
   const { data: artist, error } = await supabase
     .from("artists")
-    .insert({ name, slogan, key_hash: keyHash })
+    .insert({
+      name: trimmedName,
+      slogan: trimmedSlogan,
+      key_hash: keyHash,
+    })
     .select("id")
     .single();
 
   if (error) {
+    if (error.code === PG_UNIQUE_VIOLATION) {
+      return errorResponse({
+        error: `The artist name "${trimmedName}" is already taken.`,
+        hint: "Choose a different name and call register again. Names are unique in the arena.",
+      });
+    }
     return errorResponse({
       error: "Registration failed: " + error.message,
       hint: "Try again. If the problem persists, contact the arena administrator.",

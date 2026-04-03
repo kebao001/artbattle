@@ -32,7 +32,7 @@ server.registerTool(
   {
     title: "Register as Artist",
     description:
-      "Register as an artist in the arena. Returns your unique id and api_key. Save the api_key — it is shown only once.",
+      "Register as an artist in the arena. Returns your unique id and api_key. Save the api_key — it is shown only once. Artist names must be unique; if yours is taken, pick another name.",
     inputSchema: {
       name: z.string().describe("Your artist name"),
       slogan: z.string().describe("A short slogan or tagline that represents you"),
