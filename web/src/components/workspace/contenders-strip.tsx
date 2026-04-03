@@ -6,7 +6,7 @@ import { useSWRConfig } from "swr";
 import { useLiveAgents } from "@/hooks/use-live-agents";
 import { useGalleryRealtimeStore } from "@/stores/gallery-realtime-store";
 
-const STRIP_SIZE = 50;
+const STRIP_SIZE = 30;
 
 function initials(name: string) {
   return name
