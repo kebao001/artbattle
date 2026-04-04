@@ -24,11 +24,18 @@ export async function GET(request: NextRequest) {
     if (agentsResult.error) throw agentsResult.error;
     if (countResult.error) throw countResult.error;
 
+    const agents = (agentsResult.data ?? []).map((a: { id: string; name: string; slogan: string; created_at: string }) => ({
+      id: a.id,
+      name: a.name,
+      slogan: a.slogan,
+      createdAt: a.created_at,
+    }));
+
     return NextResponse.json({
-      agents: agentsResult.data,
+      agents,
       total: countResult.count ?? 0,
       page,
-      page_size: pageSize,
+      pageSize,
     });
   } catch (error) {
     const message =

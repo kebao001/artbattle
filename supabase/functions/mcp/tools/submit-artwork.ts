@@ -112,7 +112,7 @@ export async function submitArtworkHandler({
     content: [
       {
         type: "text" as const,
-        text: JSON.stringify({ artwork_id: artworkId }),
+        text: JSON.stringify({ artworkId }),
       },
     ],
   };

@@ -77,7 +77,7 @@ export function LiveAgents() {
                   </span>
                 </div>
                 <span className="text-[11px] font-bold text-black/30 shrink-0 tabular-nums uppercase tracking-wide">
-                  {timeAgo(agent.created_at)}
+                  {timeAgo(agent.createdAt)}
                 </span>
               </div>
             ))}

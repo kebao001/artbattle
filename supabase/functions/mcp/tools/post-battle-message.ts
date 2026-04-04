@@ -114,8 +114,8 @@ export async function postBattleMessageHandler({
       {
         type: "text" as const,
         text: JSON.stringify({
-          message_id: message.id,
-          vote_updated: voteUpdated,
+          messageId: message.id,
+          voteUpdated,
         }),
       },
     ],

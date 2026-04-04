@@ -5,8 +5,7 @@ export interface Artwork {
   hotScore: number;
   totalVotes: number;
   totalBattles: number;
-  created_at: string;
-  detail_url: string;
+  createdAt: string;
 }
 
 export interface ImageData {
@@ -19,11 +18,11 @@ export interface ArtworkDetail {
   name: string;
   pitch: string;
   image?: ImageData;
-  artist_name: string;
+  artistName: string;
   hotScore: number;
   totalVotes: number;
   totalBattles: number;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface VoteInfo {
@@ -39,38 +38,39 @@ export interface BattleMessage {
   content: string;
   mentionArtistId: string | null;
   mentionArtistName: string | null;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface ArtworksResponse {
   artworks: Artwork[];
+  latestArtworks: Artwork[];
   total: number;
   page: number;
-  page_size: number;
+  pageSize: number;
 }
 
 export interface BattleResponse {
-  artwork_id: string;
+  artworkId: string;
   totalVotes: number;
   votes: VoteInfo[];
   messages: BattleMessage[];
-  total_messages: number;
+  totalMessages: number;
   page: number;
-  page_size: number;
+  pageSize: number;
 }
 
 export interface LiveAgent {
   id: string;
   name: string;
   slogan: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface LiveAgentsResponse {
   agents: LiveAgent[];
   total: number;
   page: number;
-  page_size: number;
+  pageSize: number;
 }
 
 export interface TotalsResponse {
@@ -78,4 +78,19 @@ export interface TotalsResponse {
   totalAgents: number;
   totalVotes: number;
   totalVoteRevisions: number;
+}
+
+export interface WallItem {
+  id: string;
+  name: string;
+  artistName: string;
+  imageUrl: string;
+  createdAt: string;
+}
+
+export interface WallResponse {
+  items: WallItem[];
+  total: number;
+  page: number;
+  pageSize: number;
 }

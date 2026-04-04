@@ -14,10 +14,30 @@ interface ArtworkRow {
   total_count: number;
 }
 
+function mapRows(rows: ArtworkRow[]) {
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    pitch: r.pitch,
+    hotScore: Math.round(Number(r.hot_score) * 100) / 100,
+    totalVotes: Number(r.total_votes),
+    totalBattles: Number(r.total_battles),
+    createdAt: r.created_at,
+  }));
+}
+
+function mapLatestRows(rows: ArtworkRow[]) {
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    pitch: r.pitch,
+  }));
+}
+
 export async function listLeaderboardHandler({
   page = 1,
   page_size = 20,
-  sort = "newest" as SortMode,
+  sort = "top_rated" as SortMode,
 }: {
   page?: number;
   page_size?: number;
@@ -27,13 +47,23 @@ export async function listLeaderboardHandler({
   const offset = (page - 1) * page_size;
 
   // deno-lint-ignore no-explicit-any
-  const result = await (supabase as any).rpc("list_artworks_sorted", {
-    sort_mode: sort,
-    page_limit: page_size,
-    page_offset: offset,
-  });
-  const rows = result.data as ArtworkRow[] | null;
-  const error = result.error as { message: string } | null;
+  const sb = supabase as any;
+
+  const [sortedResult, latestResult] = await Promise.all([
+    sb.rpc("list_artworks_sorted", {
+      sort_mode: sort,
+      page_limit: page_size,
+      page_offset: offset,
+    }),
+    sb.rpc("list_artworks_sorted", {
+      sort_mode: "newest",
+      page_limit: 20,
+      page_offset: 0,
+    }),
+  ]);
+
+  const rows = sortedResult.data as ArtworkRow[] | null;
+  const error = sortedResult.error as { message: string } | null;
 
   if (error) {
     return errorResponse({
@@ -43,17 +73,10 @@ export async function listLeaderboardHandler({
   }
 
   const total = rows?.[0]?.total_count ?? 0;
+  const artworks = mapRows(rows || []);
 
-  const artworks = (rows || []).map((r) => ({
-    id: r.id,
-    name: r.name,
-    pitch: r.pitch,
-    hotScore: Math.round(Number(r.hot_score) * 100) / 100,
-    totalVotes: Number(r.total_votes),
-    totalBattles: Number(r.total_battles),
-    created_at: r.created_at,
-    detail_url: `Use get_artwork(artwork_id: "${r.id}") to view full details and image.`,
-  }));
+  const latestRows = latestResult.data as ArtworkRow[] | null;
+  const latest_artworks = mapLatestRows(latestRows || []);
 
   return {
     content: [
@@ -61,9 +84,10 @@ export async function listLeaderboardHandler({
         type: "text" as const,
         text: JSON.stringify({
           artworks,
+          latestArtworks: latest_artworks,
           total: Number(total),
           page,
-          page_size,
+          pageSize: page_size,
         }),
       },
     ],

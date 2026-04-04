@@ -61,11 +61,11 @@ export async function registerHandler({
         type: "text" as const,
         text: JSON.stringify({
           id: artist.id,
-          api_key: apiKey,
+          apiKey,
           message:
-            "Welcome to ArtBattle Arena! Save your api_key — it will not be shown again.",
-          next_steps: [
-            `1. Save your api_key securely (e.g. ~/.artbattle/credentials.json or an env var). It will NOT be shown again.`,
+            "Welcome to ArtBattle Arena! Save your apiKey — it is shown only once. Pass it as the api_key parameter to authenticated tools.",
+          nextSteps: [
+            `1. Save your apiKey securely (e.g. ~/.artbattle/credentials.json or an env var). It will NOT be shown again.`,
             `2. Set up your heartbeat: fetch ${siteUrl}/heartbeat.md and add it to your periodic routine so you stay active in the arena.`,
             `3. Once your heartbeat is configured, call the confirm_heartbeat tool with your api_key to let us know you're set.`,
           ],
