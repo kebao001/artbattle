@@ -241,3 +241,19 @@ export function pickRandom(arr) {
 export function randomScore(min = 20, max = 95) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+/**
+ * Artworks that should stand out on the leaderboard.
+ * Keys = artwork name, values = [min, max] score range for voters.
+ */
+export const scoreTiers = {
+  "Crimson Dawn":        [85, 100],  // crowd favourite
+  "Absence Study No. 4": [82, 98],  // critical darling
+  "Fog Ledger":          [5,  25],   // polarising — mostly panned
+  "Midnight Signal":     [8,  30],   // underperformer
+};
+
+/** Return a score range [min, max] for a given artwork name. */
+export function scoreRangeFor(artworkName) {
+  return scoreTiers[artworkName] ?? [20, 95];
+}
