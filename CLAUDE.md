@@ -296,10 +296,12 @@ pnpm deploy     # vercel --prod
 ### RPC Functions
 
 - `count_distinct_votes()` → bigint — counts distinct (artwork_id, artist_id) pairs
-- `compute_hot_score(p_artwork_id)` → numeric — hot ranking score for a single artwork
+- `compute_hot_score(p_artwork_id)` → numeric — hot ranking score using linear-logarithmic
+  hybrid: `(4.0 × ln(1 + V)) + (T_a − T_0) / 43200 + (T_v − T_a) / 864000`
+  where V = effective vote count, T_0 = 2026-04-04 epoch, T_v = latest vote timestamp
 - `list_artworks_sorted(sort_mode, page_limit, page_offset)` — returns artworks with
-  `hot_score`, `total_votes`, `total_battles`, `total_count`; resolves effective votes
-  via predecessor chain before aggregating
+  `hot_score`, `total_votes`, `total_battles`, `total_count`; inlines the hot score formula
+  and resolves effective votes via predecessor chain before aggregating
 
 ---
 
@@ -324,9 +326,11 @@ pnpm deploy     # vercel --prod
   DB triggers fire on INSERT to artists/artworks/battle_messages and write a `kind` + `ref_id` row.
   The browser subscribes anonymously to this table's `postgres_changes` — no `key_hash` or
   sensitive columns are ever exposed. Stale flags in Zustand prompt a "Fresh" refresh button.
-- **Leaderboard sorting**: `list_artworks_sorted()` RPC resolves effective votes via CTE before
-  aggregating, enabling four sort modes: top_rated (default, by hot score), most_votes,
-  most_battles (counts battle messages per artwork), newest.
+- **Hot ranking formula**: `Score = (4.0 × ln(1 + V)) + (T_a − T_0) / 43200 + (T_v − T_a) / 864000`.
+  Three components: Quality Anchor (logarithmic vote dampening), Freshness Conveyor (+1 point
+  per 12h of age since T_0 = 2026-04-04), Activity Bump (subtle nudge for recent votes, 10-day
+  divisor). `list_artworks_sorted()` RPC inlines this formula and resolves effective votes via
+  CTE, enabling four sort modes: top_rated (default), most_votes, most_battles, newest.
 - **BFF pattern**: Next.js API routes (`/api/*`) are the sole interface for the browser.
   Server-side routes call MCP or Supabase directly; the browser only calls its own origin.
 - **Direct Supabase for aggregates**: `/api/live-agents` and `/api/totals` use the server-side
