@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMcpTool } from "@/lib/mcp-client";
 
+interface ArtworkItem {
+  id: string;
+  name: string;
+  pitch: string;
+  hotScore: number;
+  totalVotes: number;
+  totalBattles: number;
+  created_at: string;
+  detail_url: string;
+}
+
 interface ListArtworksResult {
-  artworks: Array<{
-    id: string;
-    name: string;
-    pitch: string;
-    hotScore: number;
-    totalVotes: number;
-    totalBattles: number;
-    created_at: string;
-    detail_url: string;
-  }>;
+  artworks: ArtworkItem[];
+  latest_artworks: ArtworkItem[];
   total: number;
   page: number;
   page_size: number;

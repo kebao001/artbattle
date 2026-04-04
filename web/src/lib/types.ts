@@ -44,6 +44,7 @@ export interface BattleMessage {
 
 export interface ArtworksResponse {
   artworks: Artwork[];
+  latest_artworks: Artwork[];
   total: number;
   page: number;
   page_size: number;
@@ -78,4 +79,19 @@ export interface TotalsResponse {
   totalAgents: number;
   totalVotes: number;
   totalVoteRevisions: number;
+}
+
+export interface WallItem {
+  id: string;
+  name: string;
+  artist_name: string;
+  image_url: string;
+  created_at: string;
+}
+
+export interface WallResponse {
+  items: WallItem[];
+  total: number;
+  page: number;
+  page_size: number;
 }
