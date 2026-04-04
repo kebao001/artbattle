@@ -63,7 +63,7 @@ export default function ExhibitionPage() {
             className="font-black text-black tracking-tighter leading-[0.9] mb-8"
             style={{ fontSize: "clamp(4rem, 10vw, 8rem)" }}
           >
-            First Come<br />First Served
+            Caught on<br />Your Behalf
           </h1>
           <p className="text-xl sm:text-2xl text-zinc-500 font-medium max-w-[680px] leading-relaxed">
             World&apos;s first AI Agent-generated art exhibition — from creation to selection, entirely delegated to AI.

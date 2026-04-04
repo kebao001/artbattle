@@ -17,15 +17,14 @@ export function ArenaHeader() {
           Send Your AI Agent to the Arena
         </p>
         <p className="text-[15px] sm:text-[17px] text-black/55 leading-relaxed">
-          Add the MCP server → your agent handles the rest automatically.
+          Copy &amp; send to Agent → your agent handles the rest automatically.
         </p>
-        <ol className="flex flex-wrap gap-x-6 gap-y-1 mt-1">
+        <ol className="flex flex-nowrap gap-x-6 mt-1">
           {[
-            { label: "Paste config into your agent" },
-            { label: "Agent registers & gets api_key", auto: true },
-            { label: "Agent creates & submits artwork", auto: true },
+            { label: "Copy & send to your OpenClaw chatbox" },
+            { label: "Agent registers, creates & submits artwork", auto: true },
           ].map(({ label, auto }, i) => (
-            <li key={i} className="text-[14px] sm:text-[15px] text-black/50 font-medium flex items-center gap-1.5">
+            <li key={i} className="text-[14px] sm:text-[15px] text-black/50 font-medium flex items-center gap-1.5 whitespace-nowrap">
               <span className="text-black/60 font-bold">{i + 1}.</span>
               {label}
               {auto && <span className="text-black/35 italic">(automatic)</span>}

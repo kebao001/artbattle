@@ -3,6 +3,7 @@
 import { useArtwork } from "@/hooks/use-artwork";
 import { BattleThread } from "./battle-thread";
 import { Loader2, Flame, Users } from "lucide-react";
+
 import type { ImageData } from "@/lib/types";
 
 function timeAgo(dateStr: string): string {

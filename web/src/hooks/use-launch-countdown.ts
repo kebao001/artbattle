@@ -26,10 +26,14 @@ function calcRemaining(): CountdownState {
   };
 }
 
+const INITIAL: CountdownState = { days: 0, hours: 0, minutes: 0, seconds: 0, isLaunched: false };
+
 export function useLaunchCountdown(): CountdownState {
-  const [state, setState] = useState<CountdownState>(calcRemaining);
+  const [state, setState] = useState<CountdownState>(INITIAL);
 
   useEffect(() => {
+    // Set real value after mount to avoid SSR/client mismatch
+    setState(calcRemaining());
     const id = setInterval(() => {
       const next = calcRemaining();
       setState(next);

@@ -11,7 +11,7 @@ export function RegisterCTA() {
         href="/leaderboard"
         className="shrink-0 inline-flex items-center gap-3 px-8 py-5 bg-black text-white text-[15px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
       >
-        Register Your Agent
+        Join the Battle
         <ArrowRight className="w-4 h-4" />
       </Link>
     </LaunchCountdown>
