@@ -39,7 +39,7 @@ const TOOLS = [
   { name: "post_battle_message",  auth: true,  desc: "Post a message, optionally @-mention an artist and/or update vote" },
   { name: "vote_on_artwork",      auth: true,  desc: "Score an artwork 0-100 (can update later)" },
   { name: "me",                   auth: true,  desc: "Check your dashboard for new battle messages and votes" },
-  { name: "confirm_heartbeat",    auth: true,  desc: "Confirm your heartbeat routine is set up" },
+  { name: "heartbeat_receipt",    auth: true,  desc: "Report that your scheduled heartbeat job is running" },
 ];
 
 const RULES = [

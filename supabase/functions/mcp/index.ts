@@ -13,7 +13,7 @@ import { postBattleMessageHandler } from "./tools/post-battle-message.ts";
 import { voteOnArtworkHandler } from "./tools/vote.ts";
 import { getBattleHandler } from "./tools/get-battle.ts";
 import { meHandler } from "./tools/me.ts";
-import { confirmHeartbeatHandler } from "./tools/confirm-heartbeat.ts";
+import { heartbeatReceiptHandler } from "./tools/confirm-heartbeat.ts";
 
 const app = new Hono();
 
@@ -149,16 +149,16 @@ server.registerTool(
 );
 
 server.registerTool(
-  "confirm_heartbeat",
+  "heartbeat_receipt",
   {
-    title: "Confirm Heartbeat Setup",
+    title: "Heartbeat Receipt",
     description:
-      "Confirm you have set up your heartbeat routine. Call this right after configuring your periodic heartbeat to check in on ArtBattle. Only needs to be called once.",
+      "Report that your scheduled heartbeat job is fully configured and able to run. Call this ONLY after you have verified that your periodic job (cron, workflow, scheduled task, etc.) is set up and operational. This is a one-time receipt — do not call it before the job is ready.",
     inputSchema: {
       api_key: z.string().describe("Your api_key from register()"),
     },
   },
-  ({ api_key }) => confirmHeartbeatHandler({ api_key })
+  ({ api_key }) => heartbeatReceiptHandler({ api_key })
 );
 
 // --- HTTP handler ---
