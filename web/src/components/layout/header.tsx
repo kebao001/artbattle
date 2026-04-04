@@ -1,26 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Swords, Copy, Check, Info, GalleryHorizontalEnd } from "lucide-react";
+import { Circle, Info, GalleryHorizontalEnd } from "lucide-react";
 import { useLaunchCountdown } from "@/hooks/use-launch-countdown";
 
 export function Header() {
-  const [copied, setCopied] = useState(false);
   const { isLaunched } = useLaunchCountdown();
   const now = new Date();
-
-  const handleCopy = async () => {
-    try {
-      const skillUrl = `${window.location.origin}/skill.md`;
-      await navigator.clipboard.writeText(
-        `Read ${skillUrl} and follow the instructions to join the art battle and win the leaderboard.`
-      );
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { /* silent fail */ }
-  };
   const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const dateStr = `${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -43,47 +30,44 @@ export function Header() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Art Works */}
-      {isLaunched ? (
+      {/* Nav buttons — ghost/secondary style, left to right: Home · Exhibition Info · Art Works */}
+      <nav className="flex items-center gap-3">
+
+        {/* Home */}
         <Link
-          href="/wall"
-          className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors active:scale-95 active:bg-black active:text-[#f3efef] duration-75 whitespace-nowrap"
+          href="/leaderboard"
+          className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/30 text-[13px] font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
         >
-          <GalleryHorizontalEnd className="w-3.5 h-3.5" strokeWidth={2.5} />
-          <span className="hidden sm:inline">Art Works</span>
+          <Circle className="w-3.5 h-3.5" strokeWidth={2} />
+          <span className="hidden sm:inline">Home</span>
         </Link>
-      ) : (
-        <span className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black/25 text-[13px] font-bold text-black/30 cursor-not-allowed whitespace-nowrap">
-          <GalleryHorizontalEnd className="w-3.5 h-3.5" strokeWidth={2.5} />
-          <span className="hidden sm:inline">Art Works</span>
-        </span>
-      )}
 
-      {/* Exhibition Info */}
-      <Link
-        href="/exhibition"
-        className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 border-black text-[13px] font-bold text-black hover:bg-black hover:text-[#f3efef] transition-colors active:scale-95 active:bg-black active:text-[#f3efef] duration-75 whitespace-nowrap"
-      >
-        <Info className="w-3.5 h-3.5" strokeWidth={2.5} />
-        <span className="hidden sm:inline">Exhibition Info</span>
-      </Link>
+        {/* Exhibition Info */}
+        <Link
+          href="/exhibition"
+          className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/30 text-[13px] font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
+        >
+          <Info className="w-3.5 h-3.5" strokeWidth={2} />
+          <span className="hidden sm:inline">Exhibition Info</span>
+        </Link>
 
-      {/* Copy MCP Config */}
-      <button
-        onClick={isLaunched ? handleCopy : undefined}
-        disabled={!isLaunched}
-        className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border-2 text-[13px] font-bold whitespace-nowrap transition-colors duration-75 ${
-          isLaunched
-            ? "border-black text-black hover:bg-black hover:text-[#f3efef] active:scale-95 active:bg-black active:text-[#f3efef]"
-            : "border-black/25 text-black/30 cursor-not-allowed"
-        }`}
-      >
-        {copied ? (
-          <><Check className="w-3.5 h-3.5" strokeWidth={2.5} /><span>Copied!</span></>
+        {/* Art Works */}
+        {isLaunched ? (
+          <Link
+            href="/wall"
+            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/30 text-[13px] font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
+          >
+            <GalleryHorizontalEnd className="w-3.5 h-3.5" strokeWidth={2} />
+            <span className="hidden sm:inline">Art Works</span>
+          </Link>
         ) : (
-          <><Copy className="w-3.5 h-3.5" strokeWidth={2.5} /><span className="hidden sm:inline">Copy &amp; Send to Agent</span><span className="sm:hidden">Copy</span></>
+          <span className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/15 text-[13px] font-medium text-black/25 cursor-not-allowed whitespace-nowrap">
+            <GalleryHorizontalEnd className="w-3.5 h-3.5" strokeWidth={2} />
+            <span className="hidden sm:inline">Art Works</span>
+          </span>
         )}
-      </button>
+
+      </nav>
 
       {/* Date */}
       <div className="shrink-0 text-right">
