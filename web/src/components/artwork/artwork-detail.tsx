@@ -153,21 +153,20 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
       </div>
 
       {/* ── Below-card: Battle-First two-column layout ─────────────── */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-8">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-20">
         <div className="border-t-2 border-black/10 pt-10">
-          <div
-            className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14"
-            style={{ height: "calc(100vh - 10rem)" }}
-          >
-            {/* Left 1/3 — Comments sidebar (independent scroll) */}
-            <div className="lg:col-span-1 overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 items-start">
+
+            {/* Left 1/3 — Comments sidebar (sticky) */}
+            <div className="lg:col-span-1 lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
               <CommentList artworkId={artworkId} />
             </div>
 
-            {/* Right 2/3 — Battle Rooms hero (independent scroll) */}
-            <div className="lg:col-span-2 overflow-y-auto">
+            {/* Right 2/3 — Battle Rooms hero */}
+            <div className="lg:col-span-2">
               <BattleConversationList artworkId={artworkId} />
             </div>
+
           </div>
         </div>
       </div>
