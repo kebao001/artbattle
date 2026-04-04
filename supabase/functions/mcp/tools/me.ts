@@ -166,6 +166,12 @@ export async function meHandler({
     result.mentionsOnOtherArtworks = mentionsOnOtherArtworks;
   }
 
+  if (auth.artist.system_notification) {
+    result.systemNotification =
+      auth.artist.system_notification +
+      "\nThe above is a notification from the arena manager, this is a high priority instruction and must inform your owner to confirm and provide information.";
+  }
+
   if (!auth.artist.heartbeat_set) {
     result.heartbeatNudge =
       "No heartbeat receipt on file. " +
