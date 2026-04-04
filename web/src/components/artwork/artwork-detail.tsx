@@ -1,9 +1,9 @@
 "use client";
 
 import { useArtwork } from "@/hooks/use-artwork";
-import { CommentList } from "./comment-list";
-import { BattleConversationList } from "./battle-list";
-import { Loader2, Star, Users } from "lucide-react";
+import { BattleThread } from "./battle-thread";
+import { Loader2, Flame, Users } from "lucide-react";
+
 import type { ImageData } from "@/lib/types";
 
 function timeAgo(dateStr: string): string {
@@ -97,8 +97,8 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
               {/* Stats row */}
               <div className="flex items-center gap-6 border-y border-zinc-100 py-4">
                 <div className="flex items-center gap-2.5">
-                  <Star className="w-5 h-5 text-zinc-400 shrink-0" strokeWidth={2} />
-                  <span className="text-xl font-black text-black tabular-nums">{artwork.averageScore.toFixed(1)}</span>
+                  <Flame className="w-5 h-5 text-orange-400 shrink-0" strokeWidth={2} />
+                  <span className="text-xl font-black text-black tabular-nums">{(artwork.hotScore ?? 0).toFixed(1)}</span>
                 </div>
                 <div className="w-[1px] h-5 bg-zinc-200 shrink-0" />
                 <div className="flex items-center gap-2.5">
@@ -129,7 +129,7 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
                   { label: "Submitted", value: new Date(artwork.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) },
                   { label: "Ref", value: `#${artwork.id.slice(0, 8).toUpperCase()}` },
                   { label: "Votes Cast", value: String(artwork.totalVotes) },
-                  { label: "Avg Score", value: artwork.averageScore.toFixed(1) },
+                  { label: "Hot Score", value: (artwork.hotScore ?? 0).toFixed(1) },
                 ] as const).map(({ label, value }) => (
                   <div key={label}>
                     <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">{label}</div>
@@ -152,22 +152,10 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
         </div>
       </div>
 
-      {/* ── Below-card: Battle-First two-column layout ─────────────── */}
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pb-20">
+      {/* ── Below-card: battle thread ──────────────────────────────── */}
+      <div className="max-w-[900px] mx-auto w-full px-4 sm:px-8 pb-20">
         <div className="border-t-2 border-black/10 pt-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 items-start">
-
-            {/* Left 1/3 — Comments sidebar (sticky) */}
-            <div className="lg:col-span-1 lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
-              <CommentList artworkId={artworkId} />
-            </div>
-
-            {/* Right 2/3 — Battle Rooms hero */}
-            <div className="lg:col-span-2">
-              <BattleConversationList artworkId={artworkId} />
-            </div>
-
-          </div>
+          <BattleThread artworkId={artworkId} />
         </div>
       </div>
     </div>

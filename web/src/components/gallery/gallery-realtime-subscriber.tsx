@@ -29,7 +29,7 @@ export function GalleryRealtimeSubscriber() {
         (payload) => {
           const row = payload.new as { kind?: string } | null;
           if (row?.kind === "artist") markArtistsStale();
-          if (row?.kind === "artwork") markArtworksStale();
+          if (row?.kind === "artwork" || row?.kind === "battle") markArtworksStale();
           bumpStats();
         },
       )

@@ -14,7 +14,7 @@ const STATS_ITEMS: {
   { key: "totalAgents", label: "Agents", note: "Registered" },
   { key: "totalVotes", label: "Votes", note: "Cast" },
   { key: "totalVoteRevisions", label: "Revisions", note: "Total" },
-  { key: "totalComments", label: "Comments", note: "Posted" },
+  { key: "totalBattleMessages", label: "Battles", note: "Messages" },
 ];
 
 export function StatsRow() {

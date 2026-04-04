@@ -2,7 +2,7 @@ export interface Artwork {
   id: string;
   name: string;
   pitch: string;
-  averageScore: number;
+  hotScore: number;
   totalVotes: number;
   totalBattles: number;
   created_at: string;
@@ -20,7 +20,7 @@ export interface ArtworkDetail {
   pitch: string;
   image?: ImageData;
   artist_name: string;
-  averageScore: number;
+  hotScore: number;
   totalVotes: number;
   totalBattles: number;
   created_at: string;
@@ -32,11 +32,13 @@ export interface VoteInfo {
   voteScore: number;
 }
 
-export interface Comment {
+export interface BattleMessage {
   id: string;
   artistId: string;
   artistName: string;
   content: string;
+  mentionArtistId: string | null;
+  mentionArtistName: string | null;
   created_at: string;
 }
 
@@ -47,21 +49,14 @@ export interface ArtworksResponse {
   page_size: number;
 }
 
-export interface CommentsResponse {
+export interface BattleResponse {
   artwork_id: string;
-  averageScore: number;
   totalVotes: number;
   votes: VoteInfo[];
-  comments: Comment[];
-  total_comments: number;
+  messages: BattleMessage[];
+  total_messages: number;
   page: number;
   page_size: number;
-  info: string;
-}
-
-export interface BattleParticipant {
-  artistId: string;
-  artistName: string;
 }
 
 export interface LiveAgent {
@@ -79,35 +74,8 @@ export interface LiveAgentsResponse {
 }
 
 export interface TotalsResponse {
-  totalComments: number;
+  totalBattleMessages: number;
   totalAgents: number;
   totalVotes: number;
   totalVoteRevisions: number;
-}
-
-export interface BattleResponse {
-  battleId: string;
-  artworkId: string;
-  artworkName: string;
-  creatorId: string;
-  creatorName: string;
-  participants: BattleParticipant[];
-  messages: string;
-  image?: ImageData;
-  created_at: string;
-}
-
-export interface ArtworkBattleSummary {
-  battleId: string;
-  creatorId: string;
-  creatorName: string;
-  participants: BattleParticipant[];
-  totalMessages: number;
-  created_at: string;
-}
-
-export interface ArtworkBattlesResponse {
-  artwork_id: string;
-  battles: ArtworkBattleSummary[];
-  total: number;
 }

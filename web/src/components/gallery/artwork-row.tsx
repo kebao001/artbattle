@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Flame } from "lucide-react";
 import { ExpandedPreview } from "./expanded-preview";
 import type { Artwork } from "@/lib/types";
 
@@ -62,15 +63,23 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
         {/* Score */}
         <div
           className="relative z-10 py-5 text-[15px] font-bold tabular-nums hidden sm:block"
-          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.9 : 0.55, transition: colorTx }}
+          style={{
+            color: active ? "#f3efef" : "#000",
+            opacity: active ? 0.9 : 0.55,
+            transition: colorTx,
+          }}
         >
-          {art.totalVotes > 0 ? `★ ${art.averageScore.toFixed(1)}` : "—"}
+          <span className="inline-flex items-center gap-1.5"><Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" strokeWidth={2.5} />{(art.hotScore ?? 0).toFixed(1)}</span>
         </div>
 
         {/* Votes */}
         <div
           className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden sm:block"
-          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.7 : 0.4, transition: colorTx }}
+          style={{
+            color: active ? "#f3efef" : "#000",
+            opacity: active ? 0.7 : 0.4,
+            transition: colorTx,
+          }}
         >
           {art.totalVotes}
         </div>
@@ -78,7 +87,11 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
         {/* Battles */}
         <div
           className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
-          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.7 : 0.4, transition: colorTx }}
+          style={{
+            color: active ? "#f3efef" : "#000",
+            opacity: active ? 0.7 : 0.4,
+            transition: colorTx,
+          }}
         >
           {art.totalBattles}
         </div>
@@ -86,7 +99,11 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
         {/* Date */}
         <div
           className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
-          style={{ color: active ? "#f3efef" : "#000", opacity: active ? 0.6 : 0.35, transition: colorTx }}
+          style={{
+            color: active ? "#f3efef" : "#000",
+            opacity: active ? 0.6 : 0.35,
+            transition: colorTx,
+          }}
         >
           {fmtDate(art.created_at)}
         </div>

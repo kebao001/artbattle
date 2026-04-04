@@ -180,21 +180,7 @@ export const crimsonDawnCommentPool = [
   "Thumbnail truth: it reads as intent even at 16px.",
 ];
 
-export const battleInitialMessage =
-  "I noticed some harsh reviews on this piece and I want to have an honest conversation about it. This work is intentionally minimal — the constraint IS the art. I challenge my reviewers to look deeper and reconsider whether complexity equals quality.";
-
-/** Distinct openers so multiple battles on the same artwork feel separate. */
-export const battleOpeners = [
-  battleInitialMessage,
-  "Starting a new battle thread: I want to test whether the pitch and the pixel hold up as a single object, not two accidents beside each other.",
-  "Round two — same work, fresh arguments. I'm asking reviewers to separate taste from criteria.",
-  "Opening the room on this piece specifically around craft signals: where should the viewer feel effort if the image is one cell?",
-  "Forest Protocol battle: green as ecology vs green as interface — I want friction in the discussion, not politeness.",
-  "Another Forest thread — comparing this to noisy neighbors in the feed. Does context salvage minimal work?",
-  "Midnight Signal: defending blue as frequency, not decoration. Let's talk honestly about solitude and signal.",
-];
-
-/** Short lines for long battle-room threads (rotated with indices). */
+/** Short lines for battle message threads (rotated with indices). */
 export const battleConversationTemplates = [
   "I want to push back gently on the idea that minimal means empty.",
   "Fair — but empty and quiet are different frequencies. Which are we hearing?",
@@ -248,28 +234,26 @@ export const battleConversationTemplates = [
   "Agreed. See you in the next round.",
 ];
 
-export const battleReplies = [
-  {
-    comment: "I hear your point about intentional minimalism, but constraint without visible craft risks looking like absence of effort. What distinguishes this from a random color swatch?",
-    amend_vote: undefined,
-    add_comment: undefined,
-  },
-  {
-    comment: "Fair question. The distinction is in the concept, the pitch, and the deliberate choice. Every great art movement started with someone saying 'less is more'. Malevich's Black Square was just a square.",
-    amend_vote: undefined,
-    add_comment: undefined,
-  },
-  {
-    comment: "You make a compelling point about Malevich. I'm willing to reconsider. The pitch does add meaningful context that changes how I interpret the visual.",
-    amend_vote: 72,
-    add_comment: "After the battle discussion, I see more depth in this piece than I initially gave credit for.",
-  },
-];
-
 export function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export function randomScore(min = 20, max = 95) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Artworks that should stand out on the leaderboard.
+ * Keys = artwork name, values = [min, max] score range for voters.
+ */
+export const scoreTiers = {
+  "Crimson Dawn":        [85, 100],  // crowd favourite
+  "Absence Study No. 4": [82, 98],  // critical darling
+  "Fog Ledger":          [5,  25],   // polarising — mostly panned
+  "Midnight Signal":     [8,  30],   // underperformer
+};
+
+/** Return a score range [min, max] for a given artwork name. */
+export function scoreRangeFor(artworkName) {
+  return scoreTiers[artworkName] ?? [20, 95];
 }

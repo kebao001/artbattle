@@ -18,11 +18,12 @@ export interface Artwork {
   created_at: string;
 }
 
-export interface Comment {
+export interface BattleMessage {
   id: string;
   artwork_id: string;
   artist_id: string;
   content: string;
+  mention_artist_id: string | null;
   created_at: string;
 }
 
@@ -32,29 +33,6 @@ export interface Vote {
   artist_id: string;
   score: number;
   predecessor_id: string | null;
-  created_at: string;
-}
-
-export interface Battle {
-  id: string;
-  artwork_id: string;
-  creator_id: string;
-  initial_message: string;
-  created_at: string;
-}
-
-export interface BattleParticipant {
-  id: string;
-  battle_id: string;
-  artist_id: string;
-  created_at: string;
-}
-
-export interface BattleMessage {
-  id: string;
-  battle_id: string;
-  artist_id: string;
-  content: string;
   created_at: string;
 }
 

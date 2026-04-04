@@ -1,103 +1,96 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
-import { downloadArtworkImage } from "../lib/image.ts";
+import { getEffectiveVotes } from "../lib/effective-votes.ts";
 
 export async function getBattleHandler({
-  battle_id,
+  artwork_id,
+  page = 1,
+  page_size = 20,
 }: {
-  battle_id: string;
+  artwork_id: string;
+  page?: number;
+  page_size?: number;
 }) {
   const supabase = getSupabase();
 
-  const { data: battle } = await supabase
-    .from("battles")
-    .select("id, artwork_id, creator_id, initial_message, created_at")
-    .eq("id", battle_id)
+  const { data: artwork } = await supabase
+    .from("artworks")
+    .select("id")
+    .eq("id", artwork_id)
     .maybeSingle();
 
-  if (!battle) {
+  if (!artwork) {
     return errorResponse({
-      error: "Battle not found. No battle exists with the given battle_id.",
-      hint: "Check the battle_id and try again.",
+      error: "Artwork not found. No artwork exists with the given artwork_id.",
+      hint: "Use list_leaderboard() to browse available artworks and get valid IDs.",
     });
   }
 
-  const [{ data: artwork }, { data: creator }, { data: participants }, { data: messages }] =
-    await Promise.all([
-      supabase.from("artworks").select("name, image_path").eq("id", battle.artwork_id).single(),
-      supabase.from("artists").select("name").eq("id", battle.creator_id).single(),
-      supabase.from("battle_participants").select("artist_id").eq("battle_id", battle_id),
-      supabase
-        .from("battle_messages")
-        .select("artist_id, content, created_at")
-        .eq("battle_id", battle_id)
-        .order("created_at", { ascending: true }),
-    ]);
+  const from = (page - 1) * page_size;
+  const to = from + page_size - 1;
 
-  const participantIds = (participants || []).map((p) => p.artist_id);
-  let participantList: { artistId: string; artistName: string }[] = [];
+  const { data: messages, error, count } = await supabase
+    .from("battle_messages")
+    .select("id, artist_id, content, mention_artist_id, created_at", { count: "exact" })
+    .eq("artwork_id", artwork_id)
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
-  if (participantIds.length > 0) {
-    const { data: artists } = await supabase
-      .from("artists")
-      .select("id, name")
-      .in("id", participantIds);
-
-    participantList = (artists || []).map((a) => ({
-      artistId: a.id,
-      artistName: a.name,
-    }));
+  if (error) {
+    return errorResponse({
+      error: "Failed to load battle messages: " + error.message,
+      hint: "Try again later.",
+    });
   }
 
-  const messageArtistIds = [
-    ...new Set((messages || []).map((m) => m.artist_id)),
+  const artistIds = [
+    ...new Set([
+      ...(messages || []).map((m) => m.artist_id),
+      ...(messages || []).filter((m) => m.mention_artist_id).map((m) => m.mention_artist_id),
+    ]),
   ];
-  const nameMap = new Map<string, string>();
 
-  if (messageArtistIds.length > 0) {
+  const nameMap = new Map<string, string>();
+  if (artistIds.length > 0) {
     const { data: artists } = await supabase
       .from("artists")
       .select("id, name")
-      .in("id", messageArtistIds);
+      .in("id", artistIds);
     for (const a of artists || []) {
       nameMap.set(a.id, a.name);
     }
   }
 
-  const concatenatedMessages = (messages || [])
-    .map((m) => {
-      const name = nameMap.get(m.artist_id) ?? "Unknown";
-      return `**${name}** [${m.artist_id}]: ${m.content}`;
-    })
-    .join("\n\n");
+  const effectiveVotes = await getEffectiveVotes(artwork_id);
 
-  const image = artwork?.image_path
-    ? await downloadArtworkImage(artwork.image_path)
-    : null;
-
-  const content: Array<Record<string, unknown>> = [
-    {
-      type: "text" as const,
-      text: JSON.stringify({
-        battleId: battle.id,
-        artworkId: battle.artwork_id,
-        artworkName: artwork?.name ?? "Unknown",
-        creatorId: battle.creator_id,
-        creatorName: creator?.name ?? "Unknown",
-        participants: participantList,
-        messages: concatenatedMessages,
-        created_at: battle.created_at,
-      }),
-    },
-  ];
-
-  if (image) {
-    content.push({
-      type: "image",
-      data: image.data,
-      mimeType: image.mimeType,
-    });
-  }
-
-  return { content };
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify({
+          artwork_id,
+          totalVotes: effectiveVotes.length,
+          votes: effectiveVotes.map((v) => ({
+            artistId: v.artist_id,
+            artistName: v.artist_name,
+            voteScore: v.score,
+          })),
+          messages: (messages || []).map((m) => ({
+            id: m.id,
+            artistId: m.artist_id,
+            artistName: nameMap.get(m.artist_id) ?? "Unknown",
+            content: m.content,
+            mentionArtistId: m.mention_artist_id ?? null,
+            mentionArtistName: m.mention_artist_id
+              ? (nameMap.get(m.mention_artist_id) ?? "Unknown")
+              : null,
+            created_at: m.created_at,
+          })),
+          total_messages: count ?? 0,
+          page,
+          page_size,
+        }),
+      },
+    ],
+  };
 }

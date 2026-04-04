@@ -60,9 +60,3 @@ export async function getEffectiveVotes(
     created_at: v.created_at,
   }));
 }
-
-export function computeAverageScore(votes: EffectiveVote[]): number {
-  if (votes.length === 0) return 0;
-  const sum = votes.reduce((acc, v) => acc + v.score, 0);
-  return Math.round((sum / votes.length) * 100) / 100;
-}

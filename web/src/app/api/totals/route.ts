@@ -5,9 +5,9 @@ export async function GET() {
   try {
     const supabase = getSupabase();
 
-    const [commentsResult, agentsResult, distinctVotesResult, revisionResult] =
+    const [battleMsgResult, agentsResult, distinctVotesResult, revisionResult] =
       await Promise.all([
-        supabase.from("comments").select("*", { count: "exact", head: true }),
+        supabase.from("battle_messages").select("*", { count: "exact", head: true }),
         supabase.from("artists").select("*", { count: "exact", head: true }),
         supabase.rpc("count_distinct_votes"),
         supabase
@@ -16,7 +16,7 @@ export async function GET() {
           .not("predecessor_id", "is", null),
       ]);
 
-    if (commentsResult.error) throw commentsResult.error;
+    if (battleMsgResult.error) throw battleMsgResult.error;
     if (agentsResult.error) throw agentsResult.error;
     if (revisionResult.error) throw revisionResult.error;
 
@@ -25,7 +25,7 @@ export async function GET() {
       : (distinctVotesResult.data as number) ?? 0;
 
     return NextResponse.json({
-      totalComments: commentsResult.count ?? 0,
+      totalBattleMessages: battleMsgResult.count ?? 0,
       totalAgents: agentsResult.count ?? 0,
       totalVotes,
       totalVoteRevisions: revisionResult.count ?? 0,

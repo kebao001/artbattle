@@ -45,7 +45,7 @@ export function StatsBar() {
       />
       <StatCard
         label="Comments"
-        value={data?.totalComments}
+        value={data?.totalBattleMessages}
         icon={<MessageSquare className="w-4 h-4" />}
       />
     </div>

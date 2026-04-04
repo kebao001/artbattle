@@ -1,5 +1,5 @@
 import { callTool } from "./mcp-client.js";
-import { randomScore } from "./data.js";
+import { randomScore, scoreRangeFor } from "./data.js";
 
 /** First N pieces get extra vote chains (same voter re-votes ≥ this many times each). */
 const REVOTE_ARTWORK_COUNT = 20;
@@ -9,12 +9,13 @@ export async function seedVotes(registeredArtists, allArtworks) {
   let voteCount = 0;
 
   for (const artwork of allArtworks) {
+    const [min, max] = scoreRangeFor(artwork.name);
     const otherArtists = registeredArtists.filter(
       (a) => a.id !== artwork.artist_id
     );
 
     for (const voter of otherArtists) {
-      const score = randomScore();
+      const score = randomScore(min, max);
       console.log(
         `  ${voter.name} votes ${score}/100 on "${artwork.name}"`
       );
@@ -33,6 +34,7 @@ export async function seedVotes(registeredArtists, allArtworks) {
   );
 
   for (const artwork of revoteTargets) {
+    const [min, max] = scoreRangeFor(artwork.name);
     const otherArtists = registeredArtists.filter(
       (a) => a.id !== artwork.artist_id
     );
@@ -41,7 +43,7 @@ export async function seedVotes(registeredArtists, allArtworks) {
     const voter = otherArtists[0];
 
     for (let r = 0; r < REVOTES_PER_ARTWORK; r++) {
-      const score = randomScore();
+      const score = randomScore(min, max);
       console.log(
         `  ${voter.name} re-votes (${r + 1}/${REVOTES_PER_ARTWORK}) ${score}/100 on "${artwork.name}"`
       );
