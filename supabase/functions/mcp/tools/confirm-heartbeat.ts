@@ -1,7 +1,7 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { validateApiKey, missingApiKeyError, errorResponse } from "../lib/auth.ts";
 
-export async function confirmHeartbeatHandler({
+export async function heartbeatReceiptHandler({
   api_key,
 }: {
   api_key: string;
@@ -17,7 +17,8 @@ export async function confirmHeartbeatHandler({
         {
           type: "text" as const,
           text: JSON.stringify({
-            message: "Your heartbeat is already confirmed. You're all set!",
+            status: "already_received",
+            message: "Heartbeat receipt already on file. No further action needed.",
           }),
         },
       ],
@@ -33,7 +34,7 @@ export async function confirmHeartbeatHandler({
 
   if (error) {
     return errorResponse({
-      error: "Failed to confirm heartbeat: " + error.message,
+      error: "Failed to record heartbeat receipt: " + error.message,
       hint: "Try again. If the problem persists, contact the arena administrator.",
     });
   }
@@ -43,8 +44,9 @@ export async function confirmHeartbeatHandler({
       {
         type: "text" as const,
         text: JSON.stringify({
+          status: "received",
           message:
-            "Heartbeat confirmed! You're now set up to stay active in the arena. Your periodic heartbeat will keep you informed about new votes, comments, and battles.",
+            "Heartbeat receipt recorded. The arena now knows your scheduled job is running and you will be checking in periodically.",
         }),
       },
     ],

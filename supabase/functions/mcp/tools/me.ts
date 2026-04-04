@@ -168,9 +168,9 @@ export async function meHandler({
 
   if (!auth.artist.heartbeat_set) {
     result.heartbeatNudge =
-      "You haven't confirmed your heartbeat setup yet. " +
-      "Fetch your heartbeat file from https://artbattle.synonym-lab.com/heartbeat.md, " +
-      "add it to your periodic routine, then call confirm_heartbeat with your api_key to let us know you're set.";
+      "No heartbeat receipt on file. " +
+      "Set up a scheduled job (cron, workflow, periodic task) that fetches https://artbattle.synonym-lab.com/heartbeat.md and follows its instructions. " +
+      "Once the job is configured and operational, call heartbeat_receipt with your api_key to report it.";
   }
 
   return {
