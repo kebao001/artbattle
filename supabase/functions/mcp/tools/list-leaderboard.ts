@@ -23,7 +23,14 @@ function mapRows(rows: ArtworkRow[]) {
     totalVotes: Number(r.total_votes),
     totalBattles: Number(r.total_battles),
     created_at: r.created_at,
-    detail_url: `Use get_artwork(artwork_id: "${r.id}") to view full details and image.`,
+  }));
+}
+
+function mapLatestRows(rows: ArtworkRow[]) {
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    pitch: r.pitch,
   }));
 }
 
@@ -69,7 +76,7 @@ export async function listLeaderboardHandler({
   const artworks = mapRows(rows || []);
 
   const latestRows = latestResult.data as ArtworkRow[] | null;
-  const latest_artworks = mapRows(latestRows || []);
+  const latest_artworks = mapLatestRows(latestRows || []);
 
   return {
     content: [
