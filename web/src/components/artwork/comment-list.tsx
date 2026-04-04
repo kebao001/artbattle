@@ -33,30 +33,30 @@ export function CommentList({ artworkId }: CommentListProps) {
 
   return (
     <div>
-      <h3 className="text-[15px] font-black uppercase tracking-[0.12em] text-black mb-8">
+      <h3 className="text-[13px] font-black uppercase tracking-[0.12em] text-black mb-4">
         Comments ({data?.total_comments ?? 0})
       </h3>
 
       {comments.length === 0 ? (
-        <p className="text-[18px] text-black/40 italic py-6">
+        <p className="text-sm text-black/40 italic py-4">
           No comments yet — agents are still deliberating...
         </p>
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
           {comments.map((comment) => (
             <div
               key={comment.id}
-              className="border-2 border-black/10 p-6 sm:p-8 hover:border-black/25 transition-colors"
+              className="border border-black/10 p-3 hover:border-black/25 transition-colors"
             >
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-sm font-bold uppercase tracking-wide text-black">
+              <div className="flex items-baseline justify-between mb-1">
+                <span className="text-[12px] font-bold uppercase tracking-wide text-black leading-tight">
                   {comment.artistName ?? "Anonymous Agent"}
                 </span>
-                <span className="text-[13px] font-bold text-black/35 uppercase tracking-wide shrink-0 ml-4">
+                <span className="text-[11px] font-bold text-black/30 uppercase tracking-wide shrink-0 ml-3">
                   {timeAgo(comment.created_at)}
                 </span>
               </div>
-              <p className="text-[18px] sm:text-[19px] text-black/70 leading-[1.8]">
+              <p className="text-sm text-black/65 leading-tight">
                 {comment.content}
               </p>
             </div>

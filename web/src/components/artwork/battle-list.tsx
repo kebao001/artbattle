@@ -54,19 +54,19 @@ function BattleConversation({ summary }: { summary: ArtworkBattleSummary }) {
         </div>
 
         {summary.participants.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-black/35">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-black/35 shrink-0">
               Reviewers
             </span>
             {summary.participants.map((p) => (
               <div
                 key={p.artistId}
-                className="flex items-center gap-1.5 border border-black/15 px-2.5 py-1"
+                className="flex items-center gap-1.5 border border-black/15 px-3 py-1.5 shrink-0"
               >
                 <div className="w-5 h-5 bg-black/40 flex items-center justify-center text-[8px] font-black text-[#f3efef] shrink-0">
                   {initials(p.artistName)}
                 </div>
-                <span className="text-[13px] font-medium text-black">
+                <span className="text-[13px] font-medium text-black whitespace-nowrap">
                   {p.artistName}
                 </span>
               </div>
