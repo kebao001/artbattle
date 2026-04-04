@@ -70,40 +70,47 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
   return (
     <div className="flex flex-col gap-10">
       {/* ── Shareable card ─────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto w-full" style={{ height: "calc(100vh - 160px)" }}>
+      <div className="max-w-7xl mx-auto w-full">
         <div
-          className="h-full bg-white border border-zinc-100 rounded-2xl overflow-hidden
-            shadow-[0_4px_32px_rgba(0,0,0,0.08)] grid grid-cols-1 md:grid-cols-5"
+          className="bg-white border border-zinc-100 rounded-2xl overflow-hidden
+            shadow-[0_4px_32px_rgba(0,0,0,0.08)] flex flex-col lg:flex-row lg:h-[calc(100vh-200px)]"
         >
-          {/* Left — image (3/5) */}
-          <div className="md:col-span-3 h-full bg-zinc-50 flex items-center justify-center p-6 sm:p-10 min-h-[200px]">
+          {/* Image panel — full width on mobile, 3/5 on desktop */}
+          <div className="lg:w-3/5 bg-zinc-50 flex items-center justify-center p-6 sm:p-10 min-h-[260px] lg:min-h-0 lg:h-full shrink-0">
             <CardImage image={artwork.image} alt={artwork.name} />
           </div>
 
-          {/* Right — metadata (2/5) */}
-          <div className="md:col-span-2 flex flex-col px-10 sm:px-14 py-10 sm:py-12 border-t border-zinc-100 md:border-t-0 md:border-l overflow-hidden">
-
-            {/* Content block — vertically centered */}
-            <div className="flex-1 flex flex-col justify-center gap-7 min-h-0">
+          {/* Metadata panel — full width on mobile, 2/5 + scrollable on desktop */}
+          <div
+            className="lg:w-2/5 flex flex-col border-t lg:border-t-0 lg:border-l border-zinc-100 overflow-y-auto
+              p-6 sm:p-8 lg:px-14 lg:pt-12 lg:pb-10"
+          >
+            {/* Main content — flows from top */}
+            <div className="flex flex-col gap-6">
 
               {/* Title */}
               <h1
-                className="font-black text-black tracking-tight leading-[1.1]"
-                style={{ fontSize: "clamp(2rem, 3.5vw, 2.75rem)" }}
+                className="font-black text-black tracking-tight leading-[1.1] text-3xl sm:text-4xl lg:text-5xl"
+                style={{ overflowWrap: "break-word", hyphens: "auto" }}
               >
                 {artwork.name}
               </h1>
 
               {/* Stats row */}
-              <div className="flex items-center gap-6 border-y border-zinc-100 py-4">
-                <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-5 border-y border-zinc-100 py-4">
+                <div className="flex items-center gap-2">
                   <Flame className="w-5 h-5 text-orange-400 shrink-0" strokeWidth={2} />
-                  <span className="text-xl font-black text-black tabular-nums">{(artwork.hotScore ?? 0).toFixed(1)}</span>
+                  <span className="text-xl font-black text-black tabular-nums">
+                    {(artwork.hotScore ?? 0).toFixed(1)}
+                  </span>
                 </div>
                 <div className="w-[1px] h-5 bg-zinc-200 shrink-0" />
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-zinc-400 shrink-0" strokeWidth={2} />
-                  <span className="text-xl font-bold text-zinc-500 tabular-nums">{artwork.totalVotes} <span className="text-lg uppercase tracking-wide">votes</span></span>
+                  <span className="text-xl font-bold text-zinc-500 tabular-nums">
+                    {artwork.totalVotes}{" "}
+                    <span className="text-base uppercase tracking-wide">votes</span>
+                  </span>
                 </div>
               </div>
 
@@ -113,36 +120,61 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
                   {initials(artwork.artistName)}
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-black leading-tight">{artwork.artistName}</div>
-                  <div className="text-sm font-bold text-zinc-400 uppercase tracking-wider">{timeAgo(artwork.createdAt)}</div>
+                  <div
+                    className="text-lg font-bold text-black leading-tight"
+                    style={{ overflowWrap: "break-word" }}
+                  >
+                    {artwork.artistName}
+                  </div>
+                  <div className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+                    {timeAgo(artwork.createdAt)}
+                  </div>
                 </div>
               </div>
 
-              {/* Pitch — h-auto vertical bar */}
-              <div className="border-l-4 border-black pl-6">
-                <p className="text-xl text-zinc-500 leading-relaxed">{artwork.pitch}</p>
+              {/* Pitch */}
+              <div className="border-l-4 border-black pl-5">
+                <p
+                  className="text-base lg:text-lg text-zinc-500 leading-relaxed"
+                  style={{ overflowWrap: "break-word" }}
+                >
+                  {artwork.pitch}
+                </p>
               </div>
 
               {/* Technical metadata grid */}
-              <div className="grid grid-cols-2 gap-x-8 gap-y-4 pt-5 border-t border-zinc-100">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-5 pt-5 border-t border-zinc-100">
                 {([
-                  { label: "Submitted", value: new Date(artwork.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) },
+                  {
+                    label: "Submitted",
+                    value: new Date(artwork.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }),
+                  },
                   { label: "Ref", value: `#${artwork.id.slice(0, 8).toUpperCase()}` },
                   { label: "Votes Cast", value: String(artwork.totalVotes) },
                   { label: "Hot Score", value: (artwork.hotScore ?? 0).toFixed(1) },
                 ] as const).map(({ label, value }) => (
-                  <div key={label}>
-                    <div className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">{label}</div>
-                    <div className="text-base font-bold text-zinc-600 tabular-nums">{value}</div>
+                  <div key={label} className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+                      {label}
+                    </div>
+                    <div
+                      className="text-sm font-bold text-zinc-600 tabular-nums truncate"
+                    >
+                      {value}
+                    </div>
                   </div>
                 ))}
               </div>
 
             </div>
 
-            {/* Footer watermark */}
-            <div className="shrink-0 pt-6 mt-6 border-t border-zinc-50 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-zinc-300">
+            {/* Footer watermark — pushed to bottom on desktop via mt-auto */}
+            <div className="mt-8 lg:mt-auto pt-5 border-t border-zinc-100 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.15em] text-zinc-300 shrink-0">
                 <span className="w-2 h-2 rounded-full bg-zinc-300" />
                 Art Battle Arena
               </div>
