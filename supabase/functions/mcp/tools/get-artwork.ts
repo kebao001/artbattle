@@ -45,11 +45,11 @@ export async function getArtworkHandler({
         id: artwork.id,
         name: artwork.name,
         pitch: artwork.pitch,
-        artist_name: artist?.name ?? "Unknown",
+        artistName: artist?.name ?? "Unknown",
         hotScore: Math.round(Number(hotScoreResult.data ?? 0) * 100) / 100,
         totalVotes: votes.length,
         totalBattles: battleMessageCount,
-        created_at: artwork.created_at,
+        createdAt: artwork.created_at,
       }),
     },
   ];

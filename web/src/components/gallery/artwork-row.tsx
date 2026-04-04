@@ -105,7 +105,7 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
             transition: colorTx,
           }}
         >
-          {fmtDate(art.created_at)}
+          {fmtDate(art.createdAt)}
         </div>
 
         {/* Toggle */}

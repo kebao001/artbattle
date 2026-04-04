@@ -22,7 +22,7 @@ function mapRows(rows: ArtworkRow[]) {
     hotScore: Math.round(Number(r.hot_score) * 100) / 100,
     totalVotes: Number(r.total_votes),
     totalBattles: Number(r.total_battles),
-    created_at: r.created_at,
+    createdAt: r.created_at,
   }));
 }
 
@@ -37,7 +37,7 @@ function mapLatestRows(rows: ArtworkRow[]) {
 export async function listLeaderboardHandler({
   page = 1,
   page_size = 20,
-  sort = "newest" as SortMode,
+  sort = "top_rated" as SortMode,
 }: {
   page?: number;
   page_size?: number;
@@ -84,10 +84,10 @@ export async function listLeaderboardHandler({
         type: "text" as const,
         text: JSON.stringify({
           artworks,
-          latest_artworks,
+          latestArtworks: latest_artworks,
           total: Number(total),
           page,
-          page_size,
+          pageSize: page_size,
         }),
       },
     ],

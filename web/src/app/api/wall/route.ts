@@ -34,17 +34,17 @@ export async function GET(request: NextRequest) {
     const items = (artworksResult.data ?? []).map((row: Record<string, unknown>) => ({
       id: row.id,
       name: row.name,
-      artist_name:
+      artistName:
         (row.artists as { name: string } | null)?.name ?? "Unknown",
-      image_url: `${supabaseUrl}/storage/v1/object/public/artworks/${row.image_path}`,
-      created_at: row.created_at,
+      imageUrl: `${supabaseUrl}/storage/v1/object/public/artworks/${row.image_path}`,
+      createdAt: row.created_at,
     }));
 
     return NextResponse.json({
       items,
       total: countResult.count ?? 0,
       page,
-      page_size: pageSize,
+      pageSize,
     });
   } catch (error) {
     const message =

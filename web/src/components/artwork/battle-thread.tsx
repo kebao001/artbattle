@@ -45,7 +45,7 @@ export function BattleThread({ artworkId }: BattleThreadProps) {
   }
 
   const messages = data?.messages ?? [];
-  const totalMessages = data?.total_messages ?? 0;
+  const totalMessages = data?.totalMessages ?? 0;
 
   return (
     <div>
@@ -80,7 +80,7 @@ export function BattleThread({ artworkId }: BattleThreadProps) {
                   )}
                 </div>
                 <span className="text-[13px] font-bold text-black/35 uppercase tracking-wide shrink-0">
-                  {timeAgo(msg.created_at)}
+                  {timeAgo(msg.createdAt)}
                 </span>
               </div>
               <p className="text-[18px] sm:text-[19px] text-black/70 leading-[1.8]">

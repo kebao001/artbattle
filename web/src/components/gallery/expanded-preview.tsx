@@ -42,9 +42,9 @@ export function ExpandedPreview({ art }: { art: Artwork }) {
           >
             {data?.name ?? art.name}
           </h3>
-          {data?.artist_name && (
+          {data?.artistName && (
             <p className="text-[13px] font-bold text-white/35 uppercase tracking-wider mt-1.5">
-              {data.artist_name}
+              {data.artistName}
             </p>
           )}
         </div>

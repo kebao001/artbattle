@@ -109,11 +109,11 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
               {/* Artist + date */}
               <div className="flex items-center gap-4">
                 <div className="w-11 h-11 bg-black flex items-center justify-center text-[12px] font-black text-white shrink-0">
-                  {initials(artwork.artist_name)}
+                  {initials(artwork.artistName)}
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-black leading-tight">{artwork.artist_name}</div>
-                  <div className="text-sm font-bold text-zinc-400 uppercase tracking-wider">{timeAgo(artwork.created_at)}</div>
+                  <div className="text-xl font-bold text-black leading-tight">{artwork.artistName}</div>
+                  <div className="text-sm font-bold text-zinc-400 uppercase tracking-wider">{timeAgo(artwork.createdAt)}</div>
                 </div>
               </div>
 
@@ -125,7 +125,7 @@ export function ArtworkDetail({ artworkId }: ArtworkDetailProps) {
               {/* Technical metadata grid */}
               <div className="grid grid-cols-2 gap-x-8 gap-y-4 pt-5 border-t border-zinc-100">
                 {([
-                  { label: "Submitted", value: new Date(artwork.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) },
+                  { label: "Submitted", value: new Date(artwork.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) },
                   { label: "Ref", value: `#${artwork.id.slice(0, 8).toUpperCase()}` },
                   { label: "Votes Cast", value: String(artwork.totalVotes) },
                   { label: "Hot Score", value: (artwork.hotScore ?? 0).toFixed(1) },
