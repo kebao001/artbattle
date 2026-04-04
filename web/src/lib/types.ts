@@ -80,3 +80,18 @@ export interface TotalsResponse {
   totalVotes: number;
   totalVoteRevisions: number;
 }
+
+export interface WallItem {
+  id: string;
+  name: string;
+  artist_name: string;
+  image_url: string;
+  created_at: string;
+}
+
+export interface WallResponse {
+  items: WallItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
