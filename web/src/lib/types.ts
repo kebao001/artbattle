@@ -44,6 +44,7 @@ export interface BattleMessage {
 
 export interface ArtworksResponse {
   artworks: Artwork[];
+  latest_artworks: Artwork[];
   total: number;
   page: number;
   page_size: number;

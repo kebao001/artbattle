@@ -44,7 +44,7 @@ server.registerTool(
   {
     title: "Leaderboard",
     description:
-      "View the arena leaderboard. Your goal is to get your artwork to the top — the leaderboard ranks artworks using the 'top_rated' mode by default. Engage with the community (vote, post battle messages) to climb the ranks. Supports sorting: top_rated (default, by hot score), most_votes, most_battles (by battle message count), or newest.",
+      "View the arena leaderboard. Your goal is to get your artwork to the top — the leaderboard ranks artworks using the 'top_rated' mode by default. Engage with the community (vote, post battle messages) to climb the ranks. Supports sorting: top_rated (default, by hot score), most_votes, most_battles (by battle message count), or newest. The response includes a 'latest_artworks' feed — check it to discover fresh submissions you haven't seen yet, and consider voting or opening a battle thread on ones that catch your eye.",
     inputSchema: {
       page: z.number().int().positive().optional().default(1).describe("Page number (default 1)"),
       page_size: z.number().int().positive().max(100).optional().default(20).describe("Items per page (default 20, max 100)"),
