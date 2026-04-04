@@ -11,8 +11,8 @@ function fmtDate(d: string) {
   return `${String(dt.getDate()).padStart(2, "0")}.${String(dt.getMonth() + 1).padStart(2, "0")}.${String(dt.getFullYear()).slice(2)}`;
 }
 
-export function ArtworkRow({ art, isLead, expanded, onToggle }: {
-  art: Artwork; isLead: boolean; expanded: boolean; onToggle: () => void;
+export function ArtworkRow({ art, rank, expanded, onToggle }: {
+  art: Artwork; rank: number; expanded: boolean; onToggle: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const active = expanded || hovered;
@@ -24,7 +24,7 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
   return (
     <div>
       <div
-        className="relative grid items-center cursor-pointer border-b border-black/10 select-none"
+        className="relative flex items-center lg:grid cursor-pointer border-b border-black/10 select-none"
         style={{ gridTemplateColumns: "1fr 100px 90px 80px 90px 48px", gap: "0 16px" }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -40,41 +40,68 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
           }}
         />
 
-        {/* Artwork name */}
+        {/* Artwork name — flex-1 on mobile so it fills available space */}
         <div
-          className="relative z-10 py-5 pl-2 flex items-center gap-3"
+          className="relative z-10 flex-1 lg:flex-none min-w-0 py-4 sm:py-5 pl-2 flex items-center"
           style={{
             color: active ? "#f3efef" : "#000",
             transform: active ? "translateX(15px)" : "translateX(0)",
             transition: moveTx,
+            gap: "1.5rem",
           }}
         >
-          {isLead && (
-            <span
-              className="w-2 h-2 rounded-full shrink-0 animate-pulse"
-              style={{ backgroundColor: active ? "#f3efef" : "#000" }}
-            />
-          )}
-          <span className="text-[17px] sm:text-[19px] font-medium truncate">
-            {art.name}
+          <span
+            className="shrink-0 tabular-nums font-mono font-semibold text-[13px] sm:text-[14px] leading-none"
+            style={{ minWidth: "2ch" }}
+          >
+            {String(rank).padStart(2, "0")}.
           </span>
+
+          {/* Title + mobile stats sub-row */}
+          <div className="min-w-0">
+            <span className="text-[17px] sm:text-[19px] font-medium truncate block">
+              {art.name}
+            </span>
+            {/* Mobile-only stats — hidden on desktop where columns handle this */}
+            <p
+              className="lg:hidden mt-1 text-[11px] tabular-nums leading-none"
+              style={{
+                color: active ? "rgba(243,239,239,0.55)" : undefined,
+                transition: colorTx,
+              }}
+            >
+              <span style={{ color: active ? "rgba(243,239,239,0.55)" : "rgb(107,114,128)" }}>
+                <span className="inline-flex items-center gap-1">
+                  <Flame className="w-3 h-3 text-orange-400 shrink-0" strokeWidth={2.5} />
+                  {(art.hotScore ?? 0).toFixed(1)} pts
+                </span>
+                {" · "}
+                {art.totalVotes} votes
+                {" · "}
+                {art.totalBattles} battles
+              </span>
+            </p>
+          </div>
         </div>
 
-        {/* Score */}
+        {/* Score — desktop only */}
         <div
-          className="relative z-10 py-5 text-[15px] font-bold tabular-nums hidden sm:block"
+          className="relative z-10 py-5 text-[15px] font-bold tabular-nums hidden lg:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.9 : 0.55,
             transition: colorTx,
           }}
         >
-          <span className="inline-flex items-center gap-1.5"><Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" strokeWidth={2.5} />{(art.hotScore ?? 0).toFixed(1)}</span>
+          <span className="inline-flex items-center gap-1.5">
+            <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" strokeWidth={2.5} />
+            {(art.hotScore ?? 0).toFixed(1)}
+          </span>
         </div>
 
-        {/* Votes */}
+        {/* Votes — desktop only */}
         <div
-          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden sm:block"
+          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden lg:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.7 : 0.4,
@@ -84,9 +111,9 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
           {art.totalVotes}
         </div>
 
-        {/* Battles */}
+        {/* Battles — desktop only */}
         <div
-          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
+          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden lg:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.7 : 0.4,
@@ -96,9 +123,9 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
           {art.totalBattles}
         </div>
 
-        {/* Date */}
+        {/* Date — desktop only */}
         <div
-          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden md:block"
+          className="relative z-10 py-5 text-[15px] font-medium tabular-nums hidden lg:block"
           style={{
             color: active ? "#f3efef" : "#000",
             opacity: active ? 0.6 : 0.35,
@@ -110,7 +137,7 @@ export function ArtworkRow({ art, isLead, expanded, onToggle }: {
 
         {/* Toggle */}
         <div
-          className="relative z-10 py-5 pr-2 text-[20px] font-bold text-right"
+          className="relative z-10 shrink-0 lg:shrink py-4 sm:py-5 pr-2 text-[20px] font-bold text-right"
           style={{
             color: active ? "#f3efef" : "#000",
             transform: active ? "translateX(-15px)" : "translateX(0)",

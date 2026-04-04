@@ -171,19 +171,20 @@ export function GalleryFeed() {
             gap: "0 16px",
           }}
         >
-          <div className="pl-2">
+          <div className="pl-2 flex items-baseline gap-6">
+            <span className="text-[13px] font-bold uppercase tracking-[0.1em] py-4 block whitespace-nowrap font-mono" style={{ opacity: 0.25 }}>No.</span>
             <ColHeader label="Artwork" highlighted={false} />
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden lg:block">
             <ColHeader label="Top Rated" highlighted={activeCol === "score"} />
           </div>
-          <div className="hidden sm:block">
+          <div className="hidden lg:block">
             <ColHeader label="Votes" highlighted={activeCol === "votes"} />
           </div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <ColHeader label="Battles" highlighted={activeCol === "battles"} />
           </div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <ColHeader label="Date" highlighted={activeCol === "date"} />
           </div>
           <div />
@@ -194,37 +195,41 @@ export function GalleryFeed() {
           Array.from({ length: PAGE_SIZE }).map((_, i) => (
             <div
               key={i}
-              className="grid items-center border-b border-black/10 animate-pulse"
+              className="flex items-center lg:grid border-b border-black/10 animate-pulse"
               style={{
                 gridTemplateColumns: "1fr 100px 90px 80px 90px 48px",
                 gap: "0 16px",
               }}
             >
-              {/* Name */}
-              <div className="py-5 pl-2">
-                <div
-                  className="h-[18px] bg-zinc-300 rounded-sm"
-                  style={{ width: `${55 + ((i * 17) % 35)}%` }}
-                />
+              {/* Name + mobile stats sub-row */}
+              <div className="flex-1 lg:flex-none py-4 sm:py-5 pl-2 flex items-center" style={{ gap: "1.5rem" }}>
+                <div className="h-[14px] w-[2ch] bg-zinc-300 rounded-sm shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="h-[18px] bg-zinc-300 rounded-sm"
+                    style={{ width: `${55 + ((i * 17) % 35)}%` }}
+                  />
+                  <div className="lg:hidden mt-2 h-[11px] w-32 bg-zinc-200 rounded-sm" />
+                </div>
               </div>
               {/* Score */}
-              <div className="py-5 hidden sm:block">
+              <div className="py-5 hidden lg:block">
                 <div className="h-[15px] w-12 bg-zinc-300 rounded-sm" />
               </div>
               {/* Votes */}
-              <div className="py-5 hidden sm:block">
+              <div className="py-5 hidden lg:block">
                 <div className="h-[15px] w-8 bg-zinc-300 rounded-sm" />
               </div>
               {/* Battles */}
-              <div className="py-5 hidden md:block">
+              <div className="py-5 hidden lg:block">
                 <div className="h-[15px] w-6 bg-zinc-300 rounded-sm" />
               </div>
               {/* Date */}
-              <div className="py-5 hidden md:block">
+              <div className="py-5 hidden lg:block">
                 <div className="h-[15px] w-16 bg-zinc-300 rounded-sm" />
               </div>
               {/* Toggle */}
-              <div className="py-5 pr-2 flex justify-end">
+              <div className="shrink-0 lg:shrink py-4 sm:py-5 pr-2 flex justify-end">
                 <div className="h-5 w-5 bg-zinc-300 rounded-sm" />
               </div>
             </div>
@@ -238,7 +243,7 @@ export function GalleryFeed() {
               <ArtworkRow
                 key={art.id}
                 art={art}
-                isLead={i === 0 && page === 1}
+                rank={(page - 1) * PAGE_SIZE + i + 1}
                 expanded={expandedId === art.id}
                 onToggle={() => toggleExpand(art.id)}
               />

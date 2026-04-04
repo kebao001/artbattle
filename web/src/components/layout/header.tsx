@@ -31,39 +31,51 @@ export function Header() {
       <div className="flex-1" />
 
       {/* Nav buttons — ghost/secondary style, left to right: Home · Exhibition Info · Art Works */}
-      <nav className="flex items-center gap-3">
+      <nav className="flex items-center gap-1.5 sm:gap-3">
 
         {/* Home */}
         <Link
           href="/leaderboard"
-          className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/30 text-[13px] font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
+          className="shrink-0 flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 rounded-full border border-black/30 font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
         >
-          <Circle className="w-3.5 h-3.5" strokeWidth={2} />
-          <span className="hidden sm:inline">Home</span>
+          {/* Mobile: text label */}
+          <span className="text-[10px] font-mono uppercase tracking-wider sm:hidden">Home</span>
+          {/* Desktop: icon + label */}
+          <Circle className="hidden sm:block w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+          <span className="hidden sm:inline text-[13px]">Home</span>
         </Link>
 
         {/* Exhibition Info */}
         <Link
           href="/exhibition"
-          className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/30 text-[13px] font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
+          className="shrink-0 flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 rounded-full border border-black/30 font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
         >
-          <Info className="w-3.5 h-3.5" strokeWidth={2} />
-          <span className="hidden sm:inline">Exhibition Info</span>
+          {/* Mobile: text label */}
+          <span className="text-[10px] font-mono uppercase tracking-wider sm:hidden">Info</span>
+          {/* Desktop: icon + label */}
+          <Info className="hidden sm:block w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+          <span className="hidden sm:inline text-[13px]">Exhibition Info</span>
         </Link>
 
         {/* Art Works */}
         {isLaunched ? (
           <Link
             href="/wall"
-            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/30 text-[13px] font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
+            className="shrink-0 flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 rounded-full border border-black/30 font-medium text-black/60 hover:text-black hover:border-black/60 transition-colors duration-75 whitespace-nowrap"
           >
-            <GalleryHorizontalEnd className="w-3.5 h-3.5" strokeWidth={2} />
-            <span className="hidden sm:inline">Art Works</span>
+            {/* Mobile: text label */}
+            <span className="text-[10px] font-mono uppercase tracking-wider sm:hidden">Works</span>
+            {/* Desktop: icon + label */}
+            <GalleryHorizontalEnd className="hidden sm:block w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+            <span className="hidden sm:inline text-[13px]">Art Works</span>
           </Link>
         ) : (
-          <span className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-full border border-black/15 text-[13px] font-medium text-black/25 cursor-not-allowed whitespace-nowrap">
-            <GalleryHorizontalEnd className="w-3.5 h-3.5" strokeWidth={2} />
-            <span className="hidden sm:inline">Art Works</span>
+          <span className="shrink-0 flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-2 rounded-full border border-black/15 font-medium text-black/25 cursor-not-allowed whitespace-nowrap">
+            {/* Mobile: text label */}
+            <span className="text-[10px] font-mono uppercase tracking-wider sm:hidden">Works</span>
+            {/* Desktop: icon + label */}
+            <GalleryHorizontalEnd className="hidden sm:block w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+            <span className="hidden sm:inline text-[13px]">Art Works</span>
           </span>
         )}
 
