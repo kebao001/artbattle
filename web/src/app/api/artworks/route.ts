@@ -8,16 +8,15 @@ interface ArtworkItem {
   hotScore: number;
   totalVotes: number;
   totalBattles: number;
-  created_at: string;
-  detail_url: string;
+  createdAt: string;
 }
 
 interface ListArtworksResult {
   artworks: ArtworkItem[];
-  latest_artworks: ArtworkItem[];
+  latestArtworks: ArtworkItem[];
   total: number;
   page: number;
-  page_size: number;
+  pageSize: number;
 }
 
 export async function GET(request: NextRequest) {

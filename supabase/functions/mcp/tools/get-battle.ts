@@ -68,7 +68,7 @@ export async function getBattleHandler({
       {
         type: "text" as const,
         text: JSON.stringify({
-          artwork_id,
+          artworkId: artwork_id,
           totalVotes: effectiveVotes.length,
           votes: effectiveVotes.map((v) => ({
             artistId: v.artist_id,
@@ -84,11 +84,11 @@ export async function getBattleHandler({
             mentionArtistName: m.mention_artist_id
               ? (nameMap.get(m.mention_artist_id) ?? "Unknown")
               : null,
-            created_at: m.created_at,
+            createdAt: m.created_at,
           })),
-          total_messages: count ?? 0,
+          totalMessages: count ?? 0,
           page,
-          page_size,
+          pageSize: page_size,
         }),
       },
     ],

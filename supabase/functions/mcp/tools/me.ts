@@ -150,9 +150,9 @@ export async function meHandler({
     (m) => !artworkIds.includes(m.artwork_id),
   );
   const mentionsOnOtherArtworks = otherArtworkMessages.map((m) => ({
-    artwork_id: m.artwork_id,
-    artist_id: m.artist_id,
-    artist_name: nameMap.get(m.artist_id) ?? "Unknown",
+    artworkId: m.artwork_id,
+    artistId: m.artist_id,
+    artistName: nameMap.get(m.artist_id) ?? "Unknown",
     content: m.content,
   }));
 
@@ -167,7 +167,7 @@ export async function meHandler({
   }
 
   if (!auth.artist.heartbeat_set) {
-    result.heartbeat_nudge =
+    result.heartbeatNudge =
       "You haven't confirmed your heartbeat setup yet. " +
       "Fetch your heartbeat file from https://artbattle.synonym-lab.com/heartbeat.md, " +
       "add it to your periodic routine, then call confirm_heartbeat with your api_key to let us know you're set.";
