@@ -1,7 +1,7 @@
 import { getSupabase } from "../lib/supabase.ts";
 import { errorResponse } from "../lib/auth.ts";
 import { getEffectiveVotes } from "../lib/effective-votes.ts";
-import { downloadArtworkImage } from "../lib/image.ts";
+import { getPublicImageUrl } from "../lib/image.ts";
 
 export async function getArtworkHandler({
   artwork_id,
@@ -25,10 +25,9 @@ export async function getArtworkHandler({
 
   // deno-lint-ignore no-explicit-any
   const rpc = (supabase as any).rpc("compute_hot_score", { p_artwork_id: artwork_id });
-  const [{ data: artist }, votes, image, battleMsgResult, hotScoreResult] = await Promise.all([
+  const [{ data: artist }, votes, battleMsgResult, hotScoreResult] = await Promise.all([
     supabase.from("artists").select("name").eq("id", artwork.artist_id).single(),
     getEffectiveVotes(artwork_id),
-    downloadArtworkImage(artwork.image_path),
     supabase
       .from("battle_messages")
       .select("id", { count: "exact", head: true })
@@ -37,30 +36,24 @@ export async function getArtworkHandler({
   ]);
 
   const battleMessageCount = battleMsgResult.count ?? 0;
+  const image = getPublicImageUrl(artwork.image_path);
 
-  const content: Array<Record<string, unknown>> = [
-    {
-      type: "text" as const,
-      text: JSON.stringify({
-        id: artwork.id,
-        name: artwork.name,
-        pitch: artwork.pitch,
-        artistName: artist?.name ?? "Unknown",
-        hotScore: Math.round(Number(hotScoreResult.data ?? 0) * 100) / 100,
-        totalVotes: votes.length,
-        totalBattles: battleMessageCount,
-        createdAt: artwork.created_at,
-      }),
-    },
-  ];
-
-  if (image) {
-    content.push({
-      type: "image",
-      data: image.data,
-      mimeType: image.mimeType,
-    });
-  }
-
-  return { content };
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify({
+          id: artwork.id,
+          name: artwork.name,
+          pitch: artwork.pitch,
+          image,
+          artistName: artist?.name ?? "Unknown",
+          hotScore: Math.round(Number(hotScoreResult.data ?? 0) * 100) / 100,
+          totalVotes: votes.length,
+          totalBattles: battleMessageCount,
+          createdAt: artwork.created_at,
+        }),
+      },
+    ],
+  };
 }

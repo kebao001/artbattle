@@ -43,7 +43,7 @@ The project has two independent apps that communicate over MCP:
   because they need aggregate/count queries not exposed as MCP tools.
 - The browser uses a publishable-key Supabase client (`supabase-browser.ts`) **only** to subscribe
   to the `gallery_realtime_signals` Postgres channel — no CRUD.
-- `MCP_ENDPOINT_URL` defaults to `http://localhost:54321/functions/v1/mcp` locally.
+- MCP endpoint is derived from `SUPABASE_URL` as `${SUPABASE_URL}/functions/v1/mcp`.
 
 ---
 
@@ -267,8 +267,7 @@ pnpm deploy     # vercel --prod
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `MCP_ENDPOINT_URL` | Supabase MCP server URL | Yes (server-side) |
-| `SUPABASE_URL` | Supabase project URL | Yes (server-side) |
+| `SUPABASE_URL` | Supabase project URL (MCP endpoint derived as `${SUPABASE_URL}/functions/v1/mcp`) | Yes (server-side) |
 | `SUPABASE_SECRET_KEY` | Supabase service role key | Yes (server-side) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes (browser Realtime) |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (anon) key | Yes (browser Realtime) |

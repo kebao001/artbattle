@@ -9,7 +9,7 @@ export interface Artwork {
 }
 
 export interface ImageData {
-  data: string;
+  uri: string;
   mimeType: string;
 }
 

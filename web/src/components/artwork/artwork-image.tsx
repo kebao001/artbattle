@@ -42,7 +42,7 @@ export function ArtworkImage({
     );
   }
 
-  const src = `data:${image.mimeType};base64,${image.data}`;
+  const src = image.uri;
 
   if (cinematic) {
     return (
